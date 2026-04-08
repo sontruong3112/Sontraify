@@ -1,3 +1,4 @@
+import React from 'react'
 import { formatDuration } from '../utils/formatDuration'
 
 function SongsSection({

@@ -8,13 +8,36 @@ import { errorHandler, notFoundHandler } from "./middlewares/errorMiddleware.js"
 import authRoutes from "./routes/authRoutes.js";
 import playlistRoutes from "./routes/playlistRoutes.js";
 import songRoutes from "./routes/songRoutes.js";
+import uploadRoutes from "./routes/uploadRoutes.js";
 
 const app = express();
+
+const isAllowedDevOrigin = (origin) => {
+  if (!origin) {
+    return true;
+  }
+
+  if (origin === env.clientOrigin) {
+    return true;
+  }
+
+  return (
+    origin.startsWith("http://localhost:") ||
+    origin.startsWith("http://127.0.0.1:")
+  );
+};
 
 app.use(helmet());
 app.use(
   cors({
-    origin: env.clientOrigin,
+    origin: (origin, callback) => {
+      if (isAllowedDevOrigin(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
   })
 );
@@ -29,6 +52,7 @@ app.get("/health", (req, res) => {
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/songs", songRoutes);
 app.use("/api/v1/playlists", playlistRoutes);
+app.use("/api/v1/uploads", uploadRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

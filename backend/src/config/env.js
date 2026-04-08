@@ -11,6 +11,10 @@ export const env = {
   jwtAccessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN || "15m",
   jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "7d",
   clientOrigin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
+  cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME || "",
+  cloudinaryApiKey: process.env.CLOUDINARY_API_KEY || "",
+  cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET || "",
+  cloudinaryFolder: process.env.CLOUDINARY_FOLDER || "music-app",
 };
 
 export const validateEnv = () => {

@@ -293,3 +293,17 @@ export const playlistsApi = {
     });
   },
 };
+
+export const uploadsApi = {
+  createSignature: (tokenOrPayload, payloadMaybe) => {
+    const { token, payload } = resolveTokenPayload(tokenOrPayload, payloadMaybe);
+
+    return apiRequest({
+      endpoint: "/uploads/signature",
+      method: "POST",
+      token,
+      body: payload,
+      requiresAuth: true,
+    });
+  },
+};
