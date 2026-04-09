@@ -16,6 +16,8 @@ This project has a `render.yaml` blueprint at repo root so you can deploy backen
    - `sontraify-backend`
    - `sontraify-frontend`
 
+Note: plan/tier is selected in Render UI. Some accounts no longer support `free` for Web Services.
+
 ## 3. Set environment variables on Render
 
 Set these required secrets in Render for backend service:
@@ -55,5 +57,6 @@ Example:
 ## Notes
 
 - Free plan may sleep after inactivity; first request can be slow.
-- If you need always-on behavior, use a paid plan.
+- If your account does not offer Free Web Service, choose `Starter` for backend.
+- Static frontend can stay on free static hosting.
 - If your local machine is off, Render services still run.
