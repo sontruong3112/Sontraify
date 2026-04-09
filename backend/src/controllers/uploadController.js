@@ -5,6 +5,19 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 
 const allowedResourceTypes = new Set(["image", "video"]);
 
+const normalizePathSegment = (value) => {
+  return String(value || "").trim().replace(/\/+$/, "");
+};
+
+const isAllowedUserFolder = (folder, baseFolder) => {
+  const allowed = new Set([
+    `${baseFolder}/avatars`,
+    `${baseFolder}/playlist-covers`,
+  ]);
+
+  return allowed.has(folder);
+};
+
 const sanitizeFolder = (folder) => {
   const raw = String(folder || "").trim();
 
@@ -16,13 +29,30 @@ const sanitizeFolder = (folder) => {
 };
 
 export const getUploadSignature = asyncHandler(async (req, res) => {
-  const resourceType = String(req.body?.resourceType || "video").trim();
+  const resourceType = String(req.body?.resourceType || "image").trim();
   const folder = sanitizeFolder(req.body?.folder);
 
   if (!allowedResourceTypes.has(resourceType)) {
     return fail(res, {
       statusCode: 400,
       message: "Invalid resourceType. Use image or video",
+    });
+  }
+
+  const userRole = String(req.user?.role || "").trim();
+  const baseFolder = normalizePathSegment(env.cloudinaryFolder || "music-app") || "music-app";
+
+  if (resourceType === "video" && userRole !== "admin") {
+    return fail(res, {
+      statusCode: 403,
+      message: "Only admin can upload video",
+    });
+  }
+
+  if (userRole !== "admin" && !isAllowedUserFolder(folder, baseFolder)) {
+    return fail(res, {
+      statusCode: 403,
+      message: "You do not have permission to upload to this folder",
     });
   }
 

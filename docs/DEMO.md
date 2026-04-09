@@ -13,8 +13,6 @@ Run inside backend folder:
 
 This creates:
 - 1 admin user
-- sample songs
-- Demo Favorites playlist
 
 Default admin credentials:
 - email: admin@music.local
@@ -76,8 +74,8 @@ Mục tiêu: xác nhận nhanh toàn bộ hệ thống trước khi bàn giao ho
   - `npm run seed:reset`
 - Kết quả mong đợi:
   - Có tài khoản admin mẫu.
-  - Có bài hát mẫu.
-  - Có playlist `Demo Favorites`.
+  - Khong tu dong tao bai hat mau.
+  - Khong tu dong tao playlist mau.
 
 ### Bước 3: Chạy backend
 - Chạy trong backend:

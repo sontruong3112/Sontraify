@@ -28,9 +28,8 @@ describe('RightSidebar', () => {
     expect(handleLogout).toHaveBeenCalled()
   })
 
-  it('handles auth mode switch and submit for guest', () => {
-    const setAuthMode = vi.fn()
-    const handleAuthSubmit = vi.fn((event) => event.preventDefault())
+  it('opens dedicated login route for guest', () => {
+    const onOpenLogin = vi.fn()
 
     render(
       <RightSidebar
@@ -39,21 +38,22 @@ describe('RightSidebar', () => {
         currentUser={null}
         authLoading={false}
         handleLogout={() => {}}
-        handleAuthSubmit={handleAuthSubmit}
+        handleAuthSubmit={() => {}}
         authMode="login"
-        setAuthMode={setAuthMode}
+        setAuthMode={() => {}}
         setAuthError={() => {}}
         authForm={{ name: '', email: 'u@test.com', password: '123456' }}
         handleAuthInput={() => {}}
         authError=""
+        onOpenLogin={onOpenLogin}
         playlistError=""
       />,
     )
 
-    fireEvent.click(screen.getByRole('button', { name: /dang ky/i }))
-    fireEvent.submit(screen.getByPlaceholderText(/email@cuaban.com/i).closest('form'))
+    fireEvent.click(screen.getByRole('button', { name: /log in/i }))
+    fireEvent.click(screen.getByRole('button', { name: /sign up/i }))
 
-    expect(setAuthMode).toHaveBeenCalledWith('register')
-    expect(handleAuthSubmit).toHaveBeenCalled()
+    expect(onOpenLogin).toHaveBeenNthCalledWith(1, 'login')
+    expect(onOpenLogin).toHaveBeenNthCalledWith(2, 'register')
   })
 })

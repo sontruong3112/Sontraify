@@ -4,6 +4,7 @@ import {
   createPlaylist,
   deletePlaylist,
   listMyPlaylists,
+  reorderPlaylistSong,
   removeSongFromPlaylist,
   updatePlaylist,
 } from "../controllers/playlistController.js";
@@ -13,6 +14,7 @@ import {
   addSongValidator,
   createPlaylistValidator,
   objectIdParamValidator,
+  reorderSongsValidator,
   removeSongValidator,
   updatePlaylistValidator,
 } from "../validators/playlistValidators.js";
@@ -23,6 +25,12 @@ router.use(requireAuth);
 router.get("/", listMyPlaylists);
 router.post("/", createPlaylistValidator, validateRequest, createPlaylist);
 router.post("/:id/songs", addSongValidator, validateRequest, addSongToPlaylist);
+router.patch(
+  "/:id/songs/reorder",
+  reorderSongsValidator,
+  validateRequest,
+  reorderPlaylistSong
+);
 router.patch("/:id", updatePlaylistValidator, validateRequest, updatePlaylist);
 router.delete("/:id", objectIdParamValidator, validateRequest, deletePlaylist);
 router.delete(

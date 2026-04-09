@@ -116,6 +116,34 @@ export function useAuthSession({ onSessionCleared } = {}) {
     }
   }
 
+  const handleGoogleLogin = async (googleAccessToken) => {
+    try {
+      setAuthLoading(true)
+      setAuthError('')
+
+      const tokenValue = String(googleAccessToken || '').trim()
+
+      if (!tokenValue) {
+        throw new Error('Google access token is missing')
+      }
+
+      const data = await authApi.googleLogin({ accessToken: tokenValue })
+      const nextToken = data?.tokens?.accessToken || ''
+
+      if (!nextToken || !data?.user) {
+        throw new Error('Phan hoi dang nhap Google khong hop le')
+      }
+
+      updateAccessToken(nextToken)
+      setCurrentUser(data.user)
+      setAuthForm({ name: '', email: '', password: '' })
+    } catch (requestError) {
+      setAuthError(requestError.message || 'Dang nhap Google that bai')
+    } finally {
+      setAuthLoading(false)
+    }
+  }
+
   const handleLogout = async () => {
     try {
       setAuthLoading(true)
@@ -132,6 +160,20 @@ export function useAuthSession({ onSessionCleared } = {}) {
     }
   }
 
+  const handleUpdateProfile = async (payload) => {
+    if (!accessToken) {
+      throw new Error('Vui long dang nhap lai de cap nhat tai khoan')
+    }
+
+    const data = await authApi.updateMe(accessToken, payload)
+
+    if (data?.user) {
+      setCurrentUser(data.user)
+    }
+
+    return data?.user || null
+  }
+
   return {
     authMode,
     setAuthMode,
@@ -144,6 +186,8 @@ export function useAuthSession({ onSessionCleared } = {}) {
     authForm,
     handleAuthInput,
     handleAuthSubmit,
+    handleGoogleLogin,
+    handleUpdateProfile,
     handleLogout,
   }
 }

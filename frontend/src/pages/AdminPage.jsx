@@ -34,7 +34,7 @@ function AdminPage({
               type="button"
               onClick={() => audioFileInputRef.current?.click()}
               disabled={audioUploadLoading || songMutationLoading}
-              className="w-full rounded-md bg-zinc-800 px-3 py-2 text-sm font-medium hover:bg-zinc-700 disabled:opacity-70"
+              className="type-button-sm w-full rounded-md bg-zinc-800 px-3 py-2 hover:bg-zinc-700 disabled:opacity-70"
             >
               {audioUploadLoading ? 'Dang upload bai hat...' : 'Tai bai hat tu may tinh'}
             </button>
@@ -52,7 +52,7 @@ function AdminPage({
               type="button"
               onClick={() => coverFileInputRef.current?.click()}
               disabled={coverUploadLoading || songMutationLoading}
-              className="w-full rounded-md bg-zinc-800 px-3 py-2 text-sm font-medium hover:bg-zinc-700 disabled:opacity-70"
+              className="type-button-sm w-full rounded-md bg-zinc-800 px-3 py-2 hover:bg-zinc-700 disabled:opacity-70"
             >
               {coverUploadLoading ? 'Dang upload cover...' : 'Tai anh cover'}
             </button>
@@ -65,13 +65,12 @@ function AdminPage({
               className="hidden"
             />
           </div>
-          <input name="duration" type="number" min="0" value={adminSongForm.duration} onChange={handleAdminSongInput} placeholder="Thoi luong (giay)" className="rounded-md bg-zinc-900 px-3 py-2 text-sm" />
           <div className="sm:col-span-2 flex gap-2">
-            <button type="submit" disabled={songMutationLoading} className="rounded-md bg-green-500 px-4 py-2 text-sm font-semibold text-black">
+            <button type="submit" disabled={songMutationLoading} className="type-button-sm rounded-md bg-green-500 px-4 py-2 text-black">
               {songMutationLoading ? 'Dang luu...' : editingSongId ? 'Cap nhat bai hat' : 'Tao bai hat'}
             </button>
             {editingSongId && (
-              <button type="button" onClick={resetAdminSongForm} className="rounded-md bg-zinc-800 px-4 py-2 text-sm">Huy</button>
+              <button type="button" onClick={resetAdminSongForm} className="type-button-sm rounded-md bg-zinc-800 px-4 py-2">Huy</button>
             )}
           </div>
         </form>
@@ -82,7 +81,7 @@ function AdminPage({
         <h2 className="mb-3 text-lg font-semibold">Danh sach bai hat</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="text-xs uppercase tracking-wide text-zinc-500">
+            <thead className="type-table-head text-zinc-500">
               <tr>
                 <th className="pb-2">Title</th>
                 <th className="pb-2">Artist</th>
@@ -99,8 +98,8 @@ function AdminPage({
                   <td className="py-2 text-zinc-400">{song.genre}</td>
                   <td className="py-2 text-zinc-400">{formatDuration(song.duration)}</td>
                   <td className="py-2 text-right">
-                    <button type="button" onClick={() => handleEditSong(song)} className="mr-2 rounded bg-zinc-800 px-2 py-1 text-xs">Edit</button>
-                    <button type="button" onClick={() => handleDeleteSong(song._id)} disabled={songMutationLoading} className="rounded bg-red-500/20 px-2 py-1 text-xs text-red-200">Delete</button>
+                    <button type="button" onClick={() => handleEditSong(song)} className="type-button-sm mr-2 rounded bg-zinc-800 px-2 py-1">Edit</button>
+                    <button type="button" onClick={() => handleDeleteSong(song._id)} disabled={songMutationLoading} className="type-button-sm rounded bg-red-500/20 px-2 py-1 text-red-200">Delete</button>
                   </td>
                 </tr>
               ))}

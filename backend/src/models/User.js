@@ -27,6 +27,47 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "admin"],
       default: "user",
     },
+    authProvider: {
+      type: String,
+      enum: ["local", "google"],
+      default: "local",
+    },
+    googleId: {
+      type: String,
+      default: "",
+      index: true,
+    },
+    avatarUrl: {
+      type: String,
+      default: "",
+    },
+    likedSongIds: {
+      type: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Song",
+        },
+      ],
+      default: [],
+    },
+    recentTrackIds: {
+      type: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Song",
+        },
+      ],
+      default: [],
+    },
+    queuedTrackIds: {
+      type: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Song",
+        },
+      ],
+      default: [],
+    },
   },
   { timestamps: true }
 );

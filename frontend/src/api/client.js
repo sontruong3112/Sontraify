@@ -205,6 +205,14 @@ export const authApi = {
     });
   },
 
+  googleLogin: (payload) => {
+    return apiRequest({
+      endpoint: "/auth/google",
+      method: "POST",
+      body: payload,
+    });
+  },
+
   refreshToken: () => {
     return apiRequest({
       endpoint: "/auth/refresh-token",
@@ -220,11 +228,55 @@ export const authApi = {
     });
   },
 
+  updateMe: (tokenOrPayload, payloadMaybe) => {
+    const { token, payload } = resolveTokenPayload(tokenOrPayload, payloadMaybe);
+
+    return apiRequest({
+      endpoint: "/auth/me",
+      method: "PATCH",
+      token,
+      body: payload,
+      requiresAuth: true,
+    });
+  },
+
   logout: (token) => {
     return apiRequest({
       endpoint: "/auth/logout",
       method: "POST",
       token,
+      requiresAuth: true,
+    });
+  },
+
+  getPreferences: (token) => {
+    return apiRequest({
+      endpoint: "/auth/preferences",
+      token,
+      requiresAuth: true,
+    });
+  },
+
+  updatePreferences: (tokenOrPayload, payloadMaybe) => {
+    const { token, payload } = resolveTokenPayload(tokenOrPayload, payloadMaybe);
+
+    return apiRequest({
+      endpoint: "/auth/preferences",
+      method: "PUT",
+      token,
+      body: payload,
+      requiresAuth: true,
+    });
+  },
+
+  applyPreferenceAction: (tokenOrPayload, payloadMaybe) => {
+    const { token, payload } = resolveTokenPayload(tokenOrPayload, payloadMaybe);
+
+    return apiRequest({
+      endpoint: "/auth/preferences/actions",
+      method: "POST",
+      token,
+      body: payload,
       requiresAuth: true,
     });
   },
@@ -245,6 +297,18 @@ export const playlistsApi = {
     return apiRequest({
       endpoint: "/playlists",
       method: "POST",
+      token,
+      body: payload,
+      requiresAuth: true,
+    });
+  },
+
+  update: (tokenOrId, idOrPayload, payloadMaybe) => {
+    const { token, id, payload } = resolveTokenIdPayload(tokenOrId, idOrPayload, payloadMaybe);
+
+    return apiRequest({
+      endpoint: `/playlists/${id}`,
+      method: "PATCH",
       token,
       body: payload,
       requiresAuth: true,
@@ -278,6 +342,22 @@ export const playlistsApi = {
       endpoint: `/playlists/${id}/songs/${payload}`,
       method: "DELETE",
       token,
+      requiresAuth: true,
+    });
+  },
+
+  reorderSong: (tokenOrPlaylistId, playlistIdOrPayload, payloadMaybe) => {
+    const { token, id, payload } = resolveTokenIdPayload(
+      tokenOrPlaylistId,
+      playlistIdOrPayload,
+      payloadMaybe
+    );
+
+    return apiRequest({
+      endpoint: `/playlists/${id}/songs/reorder`,
+      method: "PATCH",
+      token,
+      body: payload,
       requiresAuth: true,
     });
   },

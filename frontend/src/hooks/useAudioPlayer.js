@@ -4,6 +4,7 @@ const PLAYER_VOLUME_KEY = 'music_player_volume'
 const PLAYER_REPEAT_MODE_KEY = 'music_player_repeat_mode'
 const PLAYER_SHUFFLE_KEY = 'music_player_shuffle'
 const PLAYER_TRACK_ID_KEY = 'music_player_track_id'
+const PLAYER_RATE_KEY = 'music_player_rate'
 
 const getInitialVolume = () => {
   const raw = Number(localStorage.getItem(PLAYER_VOLUME_KEY))
@@ -15,15 +16,31 @@ const getInitialRepeatMode = () => {
   return raw === 'off' || raw === 'all' || raw === 'one' ? raw : 'off'
 }
 
+const getInitialPlaybackRate = () => {
+  const raw = Number(localStorage.getItem(PLAYER_RATE_KEY))
+  const allowedRates = [0.75, 1, 1.25, 1.5]
+  return allowedRates.includes(raw) ? raw : 1
+}
+
 export const getInitialTrackId = () => localStorage.getItem(PLAYER_TRACK_ID_KEY) || ''
 
-export function useAudioPlayer({ songs, filteredSongs, highlightedSong, currentTrackId, setCurrentTrackId, onError }) {
+export function useAudioPlayer({
+  songs,
+  filteredSongs,
+  highlightedSong,
+  currentTrackId,
+  setCurrentTrackId,
+  queuedTrackIds = [],
+  onConsumeQueuedTrack = () => {},
+  onError,
+}) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [repeatMode, setRepeatMode] = useState(getInitialRepeatMode)
   const [isShuffle, setIsShuffle] = useState(localStorage.getItem(PLAYER_SHUFFLE_KEY) === '1')
   const [playbackTime, setPlaybackTime] = useState(0)
   const [trackDuration, setTrackDuration] = useState(0)
   const [volume, setVolume] = useState(getInitialVolume)
+  const [playbackRate, setPlaybackRate] = useState(getInitialPlaybackRate)
   const [isProgressHovering, setIsProgressHovering] = useState(false)
   const [hoverPreviewTime, setHoverPreviewTime] = useState(0)
   const [hoverPreviewPercent, setHoverPreviewPercent] = useState(0)
@@ -62,6 +79,15 @@ export function useAudioPlayer({ songs, filteredSongs, highlightedSong, currentT
   }
 
   const moveTrack = ({ direction, fromEnded = false }) => {
+    if (direction > 0 && queuedTrackIds.length > 0) {
+      const nextQueuedTrackId = queuedTrackIds[0]
+      if (nextQueuedTrackId) {
+        onConsumeQueuedTrack(nextQueuedTrackId)
+        selectTrack(nextQueuedTrackId)
+        return
+      }
+    }
+
     if (playbackQueue.length === 0) {
       return
     }
@@ -137,6 +163,16 @@ export function useAudioPlayer({ songs, filteredSongs, highlightedSong, currentT
     setIsShuffle((prev) => !prev)
   }
 
+  const cyclePlaybackRate = () => {
+    const rates = [0.75, 1, 1.25, 1.5]
+
+    setPlaybackRate((prev) => {
+      const currentIndex = rates.findIndex((rate) => rate === prev)
+      const nextIndex = currentIndex < 0 ? 1 : (currentIndex + 1) % rates.length
+      return rates[nextIndex]
+    })
+  }
+
   const seek = (event) => {
     const value = Number(event.target.value)
     const player = audioRef.current
@@ -146,6 +182,18 @@ export function useAudioPlayer({ songs, filteredSongs, highlightedSong, currentT
     if (player) {
       player.currentTime = value
     }
+  }
+
+  const seekBySeconds = (seconds) => {
+    const player = audioRef.current
+
+    if (!player || safeTrackDuration <= 0) {
+      return
+    }
+
+    const nextTime = Math.min(Math.max(player.currentTime + seconds, 0), safeTrackDuration)
+    player.currentTime = nextTime
+    setPlaybackTime(nextTime)
   }
 
   const updateProgressHover = (clientX) => {
@@ -204,6 +252,13 @@ export function useAudioPlayer({ songs, filteredSongs, highlightedSong, currentT
   }, [volume])
 
   useEffect(() => {
+    const player = audioRef.current
+    if (!player) return
+
+    player.playbackRate = playbackRate
+  }, [playbackRate])
+
+  useEffect(() => {
     localStorage.setItem(PLAYER_VOLUME_KEY, String(volume))
   }, [volume])
 
@@ -214,6 +269,10 @@ export function useAudioPlayer({ songs, filteredSongs, highlightedSong, currentT
   useEffect(() => {
     localStorage.setItem(PLAYER_SHUFFLE_KEY, isShuffle ? '1' : '0')
   }, [isShuffle])
+
+  useEffect(() => {
+    localStorage.setItem(PLAYER_RATE_KEY, String(playbackRate))
+  }, [playbackRate])
 
   useEffect(() => {
     if (currentTrackId) {
@@ -247,10 +306,12 @@ export function useAudioPlayer({ songs, filteredSongs, highlightedSong, currentT
     isPlaying,
     repeatMode,
     isShuffle,
+    playbackQueue,
     playbackTime,
     trackDuration,
     volume,
     setVolume,
+    playbackRate,
     isProgressHovering,
     hoverPreviewTime,
     hoverPreviewPercent,
@@ -264,7 +325,9 @@ export function useAudioPlayer({ songs, filteredSongs, highlightedSong, currentT
     prevTrack,
     cycleRepeatMode,
     toggleShuffle,
+    cyclePlaybackRate,
     seek,
+    seekBySeconds,
     progressMouseMove,
     progressMouseLeave,
     onLoadedMetadata,

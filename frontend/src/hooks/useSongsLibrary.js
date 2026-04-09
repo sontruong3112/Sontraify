@@ -1,6 +1,39 @@
 import { useEffect, useState } from 'react'
 import { songsApi, uploadsApi } from '../api/client'
 
+const readAudioDuration = (file) => {
+  return new Promise((resolve, reject) => {
+    const audio = document.createElement('audio')
+    const objectUrl = URL.createObjectURL(file)
+
+    const cleanup = () => {
+      URL.revokeObjectURL(objectUrl)
+      audio.removeAttribute('src')
+      audio.load()
+    }
+
+    audio.preload = 'metadata'
+    audio.onloadedmetadata = () => {
+      const seconds = Math.round(Number(audio.duration) || 0)
+      cleanup()
+
+      if (!Number.isFinite(seconds) || seconds <= 0) {
+        reject(new Error('Khong the doc thoi luong cua file nhac'))
+        return
+      }
+
+      resolve(seconds)
+    }
+
+    audio.onerror = () => {
+      cleanup()
+      reject(new Error('Khong the doc metadata cua file nhac'))
+    }
+
+    audio.src = objectUrl
+  })
+}
+
 export function useSongsLibrary({ accessToken, initialTrackId, onSongsChanged } = {}) {
   const [songs, setSongs] = useState([])
   const [loading, setLoading] = useState(true)
@@ -105,6 +138,7 @@ export function useSongsLibrary({ accessToken, initialTrackId, onSongsChanged } 
     try {
       setAudioUploadLoading(true)
       setSongMutationError('')
+      const duration = await readAudioDuration(file)
       const uploadedUrl = await uploadToCloudinary({
         file,
         resourceType: 'video',
@@ -115,7 +149,11 @@ export function useSongsLibrary({ accessToken, initialTrackId, onSongsChanged } 
         throw new Error('Khong nhan duoc URL file nhac tu Cloudinary')
       }
 
-      setAdminSongForm((prev) => ({ ...prev, audioUrl: uploadedUrl }))
+      setAdminSongForm((prev) => ({
+        ...prev,
+        audioUrl: uploadedUrl,
+        duration: String(duration),
+      }))
     } catch (requestError) {
       setSongMutationError(requestError.message || 'Upload file nhac that bai')
     } finally {

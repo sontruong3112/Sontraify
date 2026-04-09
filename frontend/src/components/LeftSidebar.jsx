@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 
 function LeftSidebar({
   Icon,
@@ -10,104 +10,263 @@ function LeftSidebar({
   playlistActionLoadingId,
   playlistLoading,
   playlists,
+  selectedPlaylistId = '',
+  onSelectPlaylist = () => {},
   handleDeletePlaylist,
   artists,
   playTrackById,
+  isCollapsed = false,
+  onToggleCollapse = () => {},
+  hoverFlyoutEnabled = true,
+  likedSongsCount = 0,
 }) {
+  const [isHoverExpanded, setIsHoverExpanded] = useState(false)
+  const openTimerRef = useRef(null)
+  const closeTimerRef = useRef(null)
+
+  useEffect(() => {
+    return () => {
+      if (openTimerRef.current) {
+        clearTimeout(openTimerRef.current)
+      }
+
+      if (closeTimerRef.current) {
+        clearTimeout(closeTimerRef.current)
+      }
+    }
+  }, [])
+  const effectiveCollapsed = isCollapsed && !isHoverExpanded
+
+  const sidePadding = effectiveCollapsed ? 'p-1' : 'p-2'
+  const cardPadding = effectiveCollapsed ? 'p-2' : 'p-4'
+  const textRevealClass = effectiveCollapsed
+    ? 'max-w-0 opacity-0'
+    : 'max-w-[220px] opacity-100'
+
+  const flyoutClassName = isCollapsed && isHoverExpanded && hoverFlyoutEnabled
+    ? 'absolute inset-y-0 left-0 z-30 w-[360px] rounded-lg bg-[#121212]/96 shadow-2xl shadow-black/60 backdrop-blur-sm'
+    : ''
+
+  const handleMouseEnter = () => {
+    if (!isCollapsed || !hoverFlyoutEnabled) {
+      return
+    }
+
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current)
+      closeTimerRef.current = null
+    }
+
+    openTimerRef.current = setTimeout(() => {
+      setIsHoverExpanded(true)
+      openTimerRef.current = null
+    }, 90)
+  }
+
+  const handleMouseLeave = () => {
+    if (!isCollapsed || !hoverFlyoutEnabled) {
+      return
+    }
+
+    if (openTimerRef.current) {
+      clearTimeout(openTimerRef.current)
+      openTimerRef.current = null
+    }
+
+    closeTimerRef.current = setTimeout(() => {
+      setIsHoverExpanded(false)
+      closeTimerRef.current = null
+    }, 120)
+  }
+
   return (
-    <aside className="rounded-lg bg-[#121212] p-2">
-      <div className="rounded-lg bg-[#181818] p-4">
-        <button type="button" onClick={handleGoHome} className="mb-4 flex items-center gap-2 text-xl font-bold">
-          <Icon className="h-7 w-7 text-green-500"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm4.64 14.45a.76.76 0 01-1.04.25 9.7 9.7 0 00-5.03-1.31 9.8 9.8 0 00-3.38.62.75.75 0 11-.5-1.41 11.2 11.2 0 013.88-.7c2.04 0 4.05.52 5.78 1.5.36.2.49.67.29 1.05zm1.5-2.9a.94.94 0 01-1.3.3 12.5 12.5 0 00-6.3-1.66 12.7 12.7 0 00-4.22.73.94.94 0 11-.62-1.77 14.6 14.6 0 014.84-.83c2.52 0 4.99.65 7.23 1.88.45.24.61.82.37 1.35zm.12-3.03A15.3 15.3 0 0010.6 8.4c-1.83 0-3.63.3-5.31.91a1.12 1.12 0 11-.76-2.1A17.5 17.5 0 0110.6 6c3.24 0 6.43.85 9.23 2.46a1.12 1.12 0 11-1.13 1.96z"/></Icon>
-          Sontraify
-        </button>
-        <button type="button" onClick={handleGoHome} className="mb-2 flex w-full items-center gap-3 rounded-md bg-white/8 px-3 py-2 text-sm font-semibold">
+    <aside
+      className={`relative rounded-lg bg-[#121212] ${sidePadding} transition-all duration-300 ease-in-out ${flyoutClassName}`}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <button
+        type="button"
+        onDoubleClick={onToggleCollapse}
+        className="absolute top-2 right-0 hidden h-[calc(100%-16px)] w-1 translate-x-1/2 cursor-col-resize rounded-full bg-transparent xl:block"
+        title="Double click de thu gon/mo rong sidebar"
+        aria-label="Resize sidebar"
+      />
+
+      <div className={`rounded-lg bg-[#181818] ${cardPadding} overflow-hidden transition-all duration-300 ease-in-out`}>
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <button
+            type="button"
+            onClick={handleGoHome}
+            className={`flex items-center text-xl font-bold ${effectiveCollapsed ? 'justify-center' : 'gap-2'}`}
+            title="Home"
+          >
+            <Icon className="h-7 w-7 text-green-500"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm4.64 14.45a.76.76 0 01-1.04.25 9.7 9.7 0 00-5.03-1.31 9.8 9.8 0 00-3.38.62.75.75 0 11-.5-1.41 11.2 11.2 0 013.88-.7c2.04 0 4.05.52 5.78 1.5.36.2.49.67.29 1.05zm1.5-2.9a.94.94 0 01-1.3.3 12.5 12.5 0 00-6.3-1.66 12.7 12.7 0 00-4.22.73.94.94 0 11-.62-1.77 14.6 14.6 0 014.84-.83c2.52 0 4.99.65 7.23 1.88.45.24.61.82.37 1.35zm.12-3.03A15.3 15.3 0 0010.6 8.4c-1.83 0-3.63.3-5.31.91a1.12 1.12 0 11-.76-2.1A17.5 17.5 0 0110.6 6c3.24 0 6.43.85 9.23 2.46a1.12 1.12 0 11-1.13 1.96z"/></Icon>
+            <span className={`overflow-hidden whitespace-nowrap transition-all duration-300 ease-in-out ${textRevealClass}`}>
+              Sontraify
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onToggleCollapse}
+            className="rounded-full bg-zinc-800 p-2 text-zinc-200 hover:bg-zinc-700"
+            title={isCollapsed ? 'Ghim mo rong sidebar' : 'Thu gon sidebar'}
+          >
+            <Icon className="h-3 w-3">
+              {effectiveCollapsed
+                ? <path d="M9 6l6 6-6 6" />
+                : <path d="M15 6l-6 6 6 6" />}
+            </Icon>
+          </button>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleGoHome}
+          className={`group relative mb-2 flex w-full items-center rounded-md px-3 py-2 text-sm font-semibold ${effectiveCollapsed ? 'justify-center bg-transparent' : 'gap-3 bg-white/8'}`}
+          title="Home"
+        >
           <Icon><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></Icon>
-          Home
+          <span className={`overflow-hidden whitespace-nowrap transition-all duration-300 ease-in-out ${textRevealClass}`}>
+            Home
+          </span>
+          {effectiveCollapsed && (
+            <span className="pointer-events-none absolute left-full ml-2 rounded-md bg-zinc-800 px-2 py-1 text-xs font-semibold text-white opacity-0 shadow-lg transition-opacity duration-200 group-hover:opacity-100">
+              Home
+            </span>
+          )}
         </button>
-        <button type="button" className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-zinc-300 hover:bg-white/8">
+
+        <button
+          type="button"
+          className={`group relative flex w-full items-center rounded-md px-3 py-2 text-sm text-zinc-300 hover:bg-white/8 ${effectiveCollapsed ? 'justify-center' : 'gap-3'}`}
+          title="Search"
+        >
           <Icon><path d="M10 2a8 8 0 105.29 14l4.35 4.35 1.41-1.41-4.35-4.35A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z"/></Icon>
-          Search
+          <span className={`overflow-hidden whitespace-nowrap transition-all duration-300 ease-in-out ${textRevealClass}`}>
+            Search
+          </span>
+          {effectiveCollapsed && (
+            <span className="pointer-events-none absolute left-full ml-2 rounded-md bg-zinc-800 px-2 py-1 text-xs font-semibold text-white opacity-0 shadow-lg transition-opacity duration-200 group-hover:opacity-100">
+              Search
+            </span>
+          )}
         </button>
       </div>
 
-      <div className="mt-2 rounded-lg bg-[#181818] p-4">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Your Library</h2>
-          {currentUser && (
-            <button
-              type="button"
-              className="rounded-full bg-zinc-800 px-3 py-1 text-xs hover:bg-zinc-700"
-            >
-              + Create
-            </button>
-          )}
-        </div>
+      <div className={`mt-2 rounded-lg bg-[#181818] ${cardPadding} overflow-hidden transition-all duration-300 ease-in-out`}>
+        {!effectiveCollapsed ? (
+          <>
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Your Library</h2>
+              {currentUser && (
+                <button
+                  type="button"
+                  className="type-button-sm rounded-full bg-zinc-800 px-3 py-1 hover:bg-zinc-700"
+                >
+                  + Create
+                </button>
+              )}
+            </div>
 
-        {currentUser && (
-          <form className="mb-3 flex gap-2" onSubmit={handleCreatePlaylist}>
-            <input
-              value={playlistName}
-              onChange={(event) => setPlaylistName(event.target.value)}
-              placeholder="Tao playlist"
-              className="w-full rounded-md bg-zinc-900 px-3 py-2 text-xs"
-            />
-            <button
-              type="submit"
-              disabled={playlistActionLoadingId === 'create'}
-              className="rounded-md bg-white px-2 text-xs font-semibold text-black"
-            >
-              {playlistActionLoadingId === 'create' ? '...' : 'Tao'}
-            </button>
-          </form>
+            {currentUser && (
+              <form className="mb-3 flex gap-2" onSubmit={handleCreatePlaylist}>
+                <input
+                  value={playlistName}
+                  onChange={(event) => setPlaylistName(event.target.value)}
+                  placeholder="Tao playlist"
+                  className="w-full rounded-md bg-zinc-900 px-3 py-2 text-xs"
+                />
+                <button
+                  type="submit"
+                  disabled={playlistActionLoadingId === 'create'}
+                  className="type-button-sm rounded-md bg-white px-2 text-black"
+                >
+                  {playlistActionLoadingId === 'create' ? '...' : 'Tao'}
+                </button>
+              </form>
+            )}
+
+            <div className="mb-3 max-h-52 space-y-2 overflow-y-auto pr-1">
+              <div className="rounded-md bg-linear-to-r from-indigo-500/30 to-sky-500/20 px-2 py-2">
+                <p className="type-kicker truncate text-zinc-200">Liked Songs</p>
+                <p className="text-[11px] text-zinc-300">{likedSongsCount} bai hat da thich</p>
+              </div>
+
+              {playlistLoading && <p className="text-xs text-zinc-500">Dang tai playlist...</p>}
+              {!playlistLoading && playlists.length === 0 && (
+                <p className="text-xs text-zinc-500">Chua co playlist nao</p>
+              )}
+              {playlists.map((playlist) => (
+                <div key={playlist._id} className="rounded-md bg-zinc-900/60 px-2 py-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <button
+                      type="button"
+                      onClick={() => onSelectPlaylist(playlist._id)}
+                      className={`truncate text-left text-sm ${selectedPlaylistId === playlist._id ? 'text-green-300' : ''}`}
+                      title={playlist.name}
+                    >
+                      {playlist.name}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeletePlaylist(playlist._id)}
+                      disabled={playlistActionLoadingId === `delete-${playlist._id}`}
+                      className="type-button-sm rounded bg-zinc-800 px-1.5 py-0.5 hover:bg-zinc-700"
+                    >
+                      Xoa
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="mb-2 flex justify-center">
+            {currentUser && (
+              <button
+                type="button"
+                className="rounded-full bg-zinc-800 p-2 text-xs hover:bg-zinc-700"
+                title="Tao playlist"
+              >
+                +
+              </button>
+            )}
+          </div>
         )}
 
-        <div className="mb-3 max-h-52 space-y-2 overflow-y-auto pr-1">
-          {playlistLoading && <p className="text-xs text-zinc-500">Dang tai playlist...</p>}
-          {!playlistLoading && playlists.length === 0 && (
-            <p className="text-xs text-zinc-500">Chua co playlist nao</p>
-          )}
-          {playlists.map((playlist) => (
-            <div key={playlist._id} className="rounded-md bg-zinc-900/60 px-2 py-2">
-              <div className="flex items-center justify-between gap-2">
-                <button
-                  type="button"
-                  className="truncate text-left text-sm"
-                >
-                  {playlist.name}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleDeletePlaylist(playlist._id)}
-                  disabled={playlistActionLoadingId === `delete-${playlist._id}`}
-                  className="rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] hover:bg-zinc-700"
-                >
-                  Xoa
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+        <div className={effectiveCollapsed ? 'space-y-3' : 'space-y-2'}>
+          {artists.map((song) => {
+            const songLabel = song.title || song.artist || 'Unknown'
 
-        <div className="space-y-2">
-          {artists.map((song) => (
-            <button
-              type="button"
-              key={`${song.artist}-${song._id}`}
-              onClick={() => playTrackById(song._id)}
-              className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left hover:bg-white/8"
-            >
-              <div className="h-9 w-9 overflow-hidden rounded-full bg-zinc-800">
-                {song.coverUrl ? (
-                  <img src={song.coverUrl} alt={song.artist} className="h-full w-full object-cover" />
-                ) : null}
-              </div>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold">{song.artist}</p>
-                <p className="truncate text-xs text-zinc-400">Artist</p>
-              </div>
-            </button>
-          ))}
+            return (
+              <button
+                type="button"
+                key={`${song.artist}-${song._id}`}
+                onClick={() => playTrackById(song._id)}
+                className={`group relative flex w-full items-center rounded-md px-2 py-1 text-left hover:bg-white/8 ${effectiveCollapsed ? 'justify-center' : 'gap-2'}`}
+                title={songLabel}
+              >
+                <div className="h-9 w-9 overflow-hidden rounded-full bg-zinc-800">
+                  {song.coverUrl ? (
+                    <img src={song.coverUrl} alt={song.artist} className="h-full w-full object-cover" />
+                  ) : null}
+                </div>
+                <div className={`min-w-0 overflow-hidden transition-all duration-300 ease-in-out ${textRevealClass}`}>
+                  {!effectiveCollapsed && (
+                    <p className="truncate text-sm font-semibold" title={songLabel}>{songLabel}</p>
+                  )}
+                  {!effectiveCollapsed && <p className="truncate text-xs text-zinc-400" title={song.artist || ''}>{song.artist || 'Artist'}</p>}
+                </div>
+                {effectiveCollapsed && (
+                  <span className="pointer-events-none absolute left-full ml-2 rounded-md bg-zinc-800 px-2 py-1 text-xs font-semibold text-white opacity-0 shadow-lg transition-opacity duration-200 group-hover:opacity-100">
+                    {songLabel}
+                  </span>
+                )}
+              </button>
+            )
+          })}
         </div>
       </div>
     </aside>
