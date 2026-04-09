@@ -690,7 +690,7 @@ function App() {
       return
     }
 
-    ensureAuthenticatedAction(() => {
+    requireAuthenticatedAction(() => {
       setLikedSongIds((prev) => {
         if (prev.includes(songId)) {
           syncPreferenceAction({ action: 'like_remove', songId })
@@ -710,7 +710,7 @@ function App() {
       return
     }
 
-    ensureAuthenticatedAction(() => {
+    requireAuthenticatedAction(() => {
       setQueuedTrackIds((prev) => [...prev, songId])
       syncPreferenceAction({ action: 'queue_add_last', songId })
     })
@@ -721,7 +721,7 @@ function App() {
       return
     }
 
-    ensureAuthenticatedAction(() => {
+    requireAuthenticatedAction(() => {
       setQueuedTrackIds((prev) => [songId, ...prev])
       syncPreferenceAction({ action: 'queue_add_next', songId })
     })
@@ -732,7 +732,7 @@ function App() {
       return
     }
 
-    ensureAuthenticatedAction(() => {
+    requireAuthenticatedAction(() => {
       setQueuedTrackIds((prev) => prev.filter((_, index) => index !== indexToRemove))
       syncPreferenceAction({ action: 'queue_remove_at', index: indexToRemove })
     })
@@ -741,7 +741,7 @@ function App() {
   const moveSongInQueue = (index, direction) => {
     const targetIndex = index + direction
 
-    ensureAuthenticatedAction(() => {
+    requireAuthenticatedAction(() => {
       setQueuedTrackIds((prev) => {
         if (index < 0 || targetIndex < 0 || index >= prev.length || targetIndex >= prev.length) {
           return prev
@@ -759,7 +759,7 @@ function App() {
   }
 
   const clearQueue = () => {
-    ensureAuthenticatedAction(() => {
+    requireAuthenticatedAction(() => {
       setQueuedTrackIds([])
       syncPreferenceAction({ action: 'queue_clear' })
     })
@@ -829,16 +829,6 @@ function App() {
     setSearchQuery('')
     setActiveArtist('')
     setIsMobileSidebarOpen(false)
-  }
-
-  const ensureAuthenticatedAction = (callback, { mode = 'login' } = {}) => {
-    if (currentUser) {
-      callback()
-      return
-    }
-
-    showPlayerToast('Vui long dang nhap de su dung tinh nang nay')
-    handleOpenLogin(mode)
   }
 
   const handleOpenLogin = (targetMode = 'login') => {
@@ -1558,14 +1548,6 @@ function App() {
           currentUser={currentUser}
           authLoading={authLoading}
           handleLogout={handleLogout}
-          handleAuthSubmit={handleAuthSubmit}
-          authMode={authMode}
-          setAuthMode={setAuthMode}
-          setAuthError={setAuthError}
-          authForm={authForm}
-          handleAuthInput={handleAuthInput}
-          authError={authError}
-          handleGoogleLogin={handleGoogleLogin}
           onOpenLogin={handleOpenLogin}
           playlistError={playlistError}
           nextUpSongs={nextUpSongs}
