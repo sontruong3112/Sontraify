@@ -42,8 +42,8 @@ describe('FooterPlayer', () => {
       />,
     )
 
-    fireEvent.click(screen.getByTitle(/bat phat ngau nhien/i))
-    fireEvent.click(screen.getByTitle(/lap lai: tat/i))
+    fireEvent.click(screen.getByTitle(/bật phát ngẫu nhiên/i))
+    fireEvent.click(screen.getByTitle(/lặp lại: tắt/i))
 
     const sliders = screen.getAllByRole('slider')
     fireEvent.change(sliders[0], { target: { value: '50' } })

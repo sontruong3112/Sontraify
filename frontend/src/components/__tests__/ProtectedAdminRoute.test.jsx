@@ -10,7 +10,7 @@ describe('ProtectedAdminRoute', () => {
       </ProtectedAdminRoute>,
     )
 
-    expect(screen.getByText(/khong co quyen vao trang quan tri/i)).toBeInTheDocument()
+    expect(screen.getByText(/không có quyền vào trang quản trị/i)).toBeInTheDocument()
     expect(screen.queryByText('Admin Content')).not.toBeInTheDocument()
   })
 

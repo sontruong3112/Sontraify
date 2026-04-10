@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+﻿import React, { useEffect, useState } from 'react'
 import { uploadsApi } from '../api/client'
 
 const MAX_AVATAR_FILE_SIZE_BYTES = 5 * 1024 * 1024
@@ -38,7 +38,7 @@ function AccountPage({
     const normalizedAvatarUrl = avatarUrl.trim()
 
     if (!normalizedName) {
-      setProfileMessage('Ten hien thi khong duoc de trong')
+      setProfileMessage('Tên hiển thị không được để trống')
       return
     }
 
@@ -49,7 +49,7 @@ function AccountPage({
           throw new Error('invalid_protocol')
         }
       } catch {
-        setProfileMessage('Avatar URL khong hop le (chi chap nhan http/https)')
+        setProfileMessage('Avatar URL không hợp lệ (chỉ chấp nhận http/https)')
         return
       }
     }
@@ -58,9 +58,9 @@ function AccountPage({
       setSaving(true)
       setProfileMessage('')
       await onUpdateProfile({ name: normalizedName, avatarUrl: normalizedAvatarUrl })
-      setProfileMessage('Cap nhat tai khoan thanh cong')
+      setProfileMessage('Cập nhật tài khoản thành công')
     } catch (error) {
-      setProfileMessage(error?.message || 'Cap nhat tai khoan that bai')
+      setProfileMessage(error?.message || 'Cập nhật tài khoản thất bại')
     } finally {
       setSaving(false)
     }
@@ -85,7 +85,7 @@ function AccountPage({
     }
 
     if (!accessToken) {
-      setProfileMessage('Vui long dang nhap lai de upload avatar')
+      setProfileMessage('Vui lòng đăng nhập lại để upload avatar')
       return
     }
 
@@ -113,19 +113,19 @@ function AccountPage({
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data?.error?.message || 'Upload avatar that bai')
+        throw new Error(data?.error?.message || 'Upload avatar thất bại')
       }
 
       const uploadedUrl = data.secure_url || data.url || ''
 
       if (!uploadedUrl) {
-        throw new Error('Khong nhan duoc URL avatar sau khi upload')
+        throw new Error('Không nhận được URL avatar sau khi upload')
       }
 
       setAvatarUrl(uploadedUrl)
-      setProfileMessage('Upload avatar thanh cong, bam Save profile de luu')
+      setProfileMessage('Upload avatar thành công, bấm Save profile để lưu')
     } catch (error) {
-      setProfileMessage(error?.message || 'Upload avatar that bai')
+      setProfileMessage(error?.message || 'Upload avatar thất bại')
     } finally {
       setAvatarUploading(false)
     }
@@ -155,7 +155,7 @@ function AccountPage({
             disabled={authLoading}
             className="type-button-sm rounded-full bg-white px-4 py-2 text-black disabled:opacity-70"
           >
-            {authLoading ? 'Dang dang xuat...' : 'Log out'}
+            {authLoading ? 'Đang đăng xuất...' : 'Log out'}
           </button>
         </div>
       </div>
@@ -198,7 +198,7 @@ function AccountPage({
         </div>
         <div className="mt-3 flex items-center gap-3">
           <label className="type-button-sm inline-flex cursor-pointer items-center rounded-full border border-white/20 px-3 py-2 text-zinc-100 hover:bg-white/10">
-            {avatarUploading ? 'Dang upload avatar...' : 'Upload avatar file'}
+            {avatarUploading ? 'Đang upload avatar...' : 'Upload avatar file'}
             <input
               type="file"
               accept="image/*"
@@ -216,13 +216,13 @@ function AccountPage({
           )}
         </div>
         <div className="mt-3 flex items-center justify-between gap-3">
-          <p className="text-xs text-zinc-400">Thong tin se duoc luu vao tai khoan hien tai.</p>
+          <p className="text-xs text-zinc-400">Thông tin sẽ được lưu vào tài khoản hiện tại.</p>
           <button
             type="submit"
             disabled={saving || avatarUploading}
             className="type-button-sm rounded-full bg-green-500 px-4 py-2 font-semibold text-black disabled:opacity-70"
           >
-            {saving ? 'Dang luu...' : 'Save profile'}
+            {saving ? 'Đang lưu...' : 'Save profile'}
           </button>
         </div>
         {profileMessage && (
@@ -235,12 +235,12 @@ function AccountPage({
       <div className="mt-6 rounded-xl border border-white/10 bg-zinc-900/60 p-4">
         <p className="text-sm font-semibold text-white">Authentication Flow Status</p>
         <p className="mt-2 text-sm text-zinc-300">
-          Ban da dang nhap thanh cong. Session/token dang hoat dong va cac tinh nang ca nhan da mo.
+          Bạn đã đăng nhập thành công. Session/token đang hoạt động và các tính năng cá nhân đã mở.
         </p>
         <ul className="mt-3 space-y-1 text-xs text-zinc-400">
-          <li>- Kiem tra avatar top-right cap nhat sau khi Save profile</li>
-          <li>- Kiem tra route /account bi chuyen qua /login neu chua dang nhap</li>
-          <li>- Kiem tra thao tac Like/Queue/Playlist yeu cau dang nhap</li>
+          <li>- Kiểm tra avatar top-right cập nhật sau khi Save profile</li>
+          <li>- Kiểm tra route /account bị chuyển qua /login nếu chưa đăng nhập</li>
+          <li>- Kiểm tra thao tác Like/Queue/Playlist yêu cầu đăng nhập</li>
         </ul>
       </div>
     </section>
@@ -248,3 +248,5 @@ function AccountPage({
 }
 
 export default AccountPage
+
+

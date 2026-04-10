@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { authApi, configureAuthSession } from '../api/client'
 
 const ACCESS_TOKEN_KEY = 'music_access_token'
@@ -103,14 +103,14 @@ export function useAuthSession({ onSessionCleared } = {}) {
       const nextToken = data?.tokens?.accessToken || ''
 
       if (!nextToken || !data?.user) {
-        throw new Error('Phan hoi dang nhap khong hop le')
+        throw new Error('Phản hồi đăng nhập không hợp lệ')
       }
 
       updateAccessToken(nextToken)
       setCurrentUser(data.user)
       setAuthForm({ name: '', email: '', password: '' })
     } catch (requestError) {
-      setAuthError(requestError.message || 'Dang nhap that bai')
+      setAuthError(requestError.message || 'Đăng nhập thất bại')
     } finally {
       setAuthLoading(false)
     }
@@ -131,14 +131,14 @@ export function useAuthSession({ onSessionCleared } = {}) {
       const nextToken = data?.tokens?.accessToken || ''
 
       if (!nextToken || !data?.user) {
-        throw new Error('Phan hoi dang nhap Google khong hop le')
+        throw new Error('Phản hồi đăng nhập Google không hợp lệ')
       }
 
       updateAccessToken(nextToken)
       setCurrentUser(data.user)
       setAuthForm({ name: '', email: '', password: '' })
     } catch (requestError) {
-      setAuthError(requestError.message || 'Dang nhap Google that bai')
+      setAuthError(requestError.message || 'Đăng nhập Google thất bại')
     } finally {
       setAuthLoading(false)
     }
@@ -162,7 +162,7 @@ export function useAuthSession({ onSessionCleared } = {}) {
 
   const handleUpdateProfile = async (payload) => {
     if (!accessToken) {
-      throw new Error('Vui long dang nhap lai de cap nhat tai khoan')
+      throw new Error('Vui lòng đăng nhập lại để cập nhật tài khoản')
     }
 
     const data = await authApi.updateMe(accessToken, payload)
@@ -191,3 +191,4 @@ export function useAuthSession({ onSessionCleared } = {}) {
     handleLogout,
   }
 }
+

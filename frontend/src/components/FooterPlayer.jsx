@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+﻿import React, { useMemo, useState } from 'react'
 import { formatDuration } from '../utils/formatDuration'
 
 function FooterPlayer({
@@ -109,14 +109,14 @@ function FooterPlayer({
             ) : null}
           </div>
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold hover:underline">{highlightedSong?.title || 'Chua co bai hat nao'}</p>
+            <p className="truncate text-sm font-semibold hover:underline">{highlightedSong?.title || 'Chưa có bài hát nào'}</p>
             <p className="truncate text-xs text-zinc-400 hover:text-zinc-200 hover:underline">{highlightedSong?.artist || '---'}</p>
           </div>
           <button
             type="button"
             onClick={handleToggleLikeCurrentTrack}
             className={isCurrentTrackLiked ? 'text-green-400 hover:text-green-300' : 'text-zinc-400 hover:text-white'}
-            title={isCurrentTrackLiked ? 'Bo thich bai hat hien tai' : 'Yeu thich bai hat hien tai'}
+            title={isCurrentTrackLiked ? 'Bỏ thích bài hát hiện tại' : 'Yêu thích bài hát hiện tại'}
           >
             <Icon className="h-5 w-5"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09A6 6 0 0116.5 3C19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54z"/></Icon>
           </button>
@@ -132,15 +132,15 @@ function FooterPlayer({
             </div>
           )}
           <div className="mb-2 flex items-center gap-4 text-zinc-300">
-            <button type="button" onClick={handleToggleShuffle} className={isShuffle ? 'text-green-400 hover:text-green-300' : 'hover:text-white'} title={isShuffle ? 'Tat phat ngau nhien' : 'Bat phat ngau nhien'}><Icon className="h-5 w-5"><path d="M17 17V7h-2v3H9V7H7v10h2v-3h6v3h2z"/></Icon></button>
-            <button type="button" onClick={handlePrevTrack} className="hover:text-white" title="Bai truoc"><Icon className="h-5 w-5"><path d="M15 18l-8-6 8-6z"/></Icon></button>
-            <button type="button" onClick={handleTogglePlayPause} className="rounded-full bg-white p-2.5 text-black hover:scale-105" title={isPlaying ? 'Tam dung' : 'Phat'}><Icon className="h-5 w-5"><path d={isPlaying ? 'M7 6h3v12H7zm7 0h3v12h-3z' : 'M8 5v14l11-7z'}/></Icon></button>
-            <button type="button" onClick={handleNextTrack} className="hover:text-white" title="Bai tiep theo"><Icon className="h-5 w-5"><path d="M9 6l8 6-8 6z"/></Icon></button>
+            <button type="button" onClick={handleToggleShuffle} className={isShuffle ? 'text-green-400 hover:text-green-300' : 'hover:text-white'} title={isShuffle ? 'Tắt phát ngẫu nhiên' : 'Bật phát ngẫu nhiên'}><Icon className="h-5 w-5"><path d="M17 17V7h-2v3H9V7H7v10h2v-3h6v3h2z"/></Icon></button>
+            <button type="button" onClick={handlePrevTrack} className="hover:text-white" title="Bài trước"><Icon className="h-5 w-5"><path d="M15 18l-8-6 8-6z"/></Icon></button>
+            <button type="button" onClick={handleTogglePlayPause} className="rounded-full bg-white p-2.5 text-black hover:scale-105" title={isPlaying ? 'Tạm dừng' : 'Phát'}><Icon className="h-5 w-5"><path d={isPlaying ? 'M7 6h3v12H7zm7 0h3v12h-3z' : 'M8 5v14l11-7z'}/></Icon></button>
+            <button type="button" onClick={handleNextTrack} className="hover:text-white" title="Bài tiếp theo"><Icon className="h-5 w-5"><path d="M9 6l8 6-8 6z"/></Icon></button>
             <button
               type="button"
               onClick={handleCycleRepeatMode}
               className={repeatMode !== 'off' ? 'relative text-green-400 hover:text-green-300' : 'relative hover:text-white'}
-              title={repeatMode === 'off' ? 'Lap lai: Tat' : repeatMode === 'all' ? 'Lap lai: Toan bo' : 'Lap lai: Mot bai'}
+              title={repeatMode === 'off' ? 'Lặp lại: Tắt' : repeatMode === 'all' ? 'Lặp lại: Toàn bộ' : 'Lặp lại: Một bài'}
             >
               <Icon className="h-5 w-5"><path d="M7 7h10v2l3-3-3-3v2H6a3 3 0 00-3 3v3h2V8a1 1 0 011-1h11v2zm10 10H6v-2l-3 3 3 3v-2h11a3 3 0 003-3v-3h-2v3a1 1 0 01-1 1z"/></Icon>
               {repeatMode === 'one' && <span className="absolute -bottom-1 -right-1 text-[9px] font-bold">1</span>}
@@ -149,7 +149,7 @@ function FooterPlayer({
               type="button"
               onClick={handleCyclePlaybackRate}
               className={`type-button-sm rounded px-1.5 py-0.5 ${playbackRate === 1 ? 'text-zinc-300 hover:text-white' : 'bg-green-500/20 text-green-300'}`}
-              title="Doi toc do phat"
+              title="Đổi tốc độ phát"
             >
               {playbackRate}x
             </button>
@@ -185,7 +185,7 @@ function FooterPlayer({
               type="button"
               onClick={() => setShowRemainingTime((prev) => !prev)}
               className="text-[11px] text-zinc-400 hover:text-zinc-200"
-              title="Chuyen hien thi tong thoi luong va thoi gian con lai"
+              title="Chuyển hiển thị tổng thời lượng và thời gian còn lại"
             >
               {showRemainingTime
                 ? `-${formatDuration(remainingTime)}`
@@ -199,7 +199,7 @@ function FooterPlayer({
             {syncBadge.text}
           </span>
           <button type="button" className="hidden hover:text-white lg:block" title="Now playing view"><Icon className="h-5 w-5"><path d="M5 5h14v2H5zm0 6h9v2H5zm0 6h14v2H5z"/></Icon></button>
-          <button type="button" onClick={handleOpenQueuePanel} className="hover:text-white" title={`Hang doi (${queueCount || 0})`}>
+          <button type="button" onClick={handleOpenQueuePanel} className="hover:text-white" title={`Hàng đợi (${queueCount || 0})`}>
             <div className="relative">
               <Icon className="h-5 w-5"><path d="M4 6h16v2H4zm0 5h10v2H4zm0 5h6v2H4z"/></Icon>
               {(queueCount || 0) > 0 ? <span className="type-badge absolute -right-2 -top-2 rounded-full bg-green-500 px-1 text-black">{queueCount}</span> : null}
@@ -214,7 +214,7 @@ function FooterPlayer({
               onVolumeWheel(event.deltaY)
             }}
             className="hover:text-white"
-            title={isMuted ? 'Bat tieng' : 'Tat tieng'}
+            title={isMuted ? 'Bật tiếng' : 'Tắt tiếng'}
           >
             {volumeIcon}
           </button>
@@ -236,3 +236,5 @@ function FooterPlayer({
 }
 
 export default FooterPlayer
+
+

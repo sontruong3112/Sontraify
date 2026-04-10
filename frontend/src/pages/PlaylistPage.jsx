@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+﻿import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { formatDuration } from '../utils/formatDuration'
 
 function PlaylistPage({
@@ -122,7 +122,7 @@ function PlaylistPage({
 
     const success = await handleUploadPlaylistCover(playlist._id, file)
     if (success) {
-      onShowToast('Da cap nhat anh cover playlist')
+      onShowToast('Đã cập nhật ảnh cover playlist')
     }
   }
 
@@ -193,7 +193,7 @@ function PlaylistPage({
       }
     })
 
-    onShowToast(`Da them ${selectedSongIds.length} bai vao queue`)
+    onShowToast(`Đã thêm ${selectedSongIds.length} bài vào queue`)
     setSelectedSongIds([])
     setLastSelectedDisplayIndex(-1)
   }
@@ -259,7 +259,7 @@ function PlaylistPage({
                 <input
                   value={draftCoverUrl}
                   onChange={(event) => setDraftCoverUrl(event.target.value)}
-                  placeholder="Dan URL anh cover"
+                  placeholder="Dán URL ảnh cover"
                   className="w-full min-w-0 rounded-md bg-black/40 px-3 py-2 text-xs outline-none ring-1 ring-white/15"
                 />
                 <button
@@ -308,7 +308,7 @@ function PlaylistPage({
               </div>
             )}
 
-            <p className="type-body-muted mt-2 text-zinc-200/90">{songs.length} bai hat</p>
+            <p className="type-body-muted mt-2 text-zinc-200/90">{songs.length} bài hát</p>
           </div>
           </div>
           <button
@@ -322,16 +322,16 @@ function PlaylistPage({
       </section>
 
       {!playlist ? (
-        <p className="rounded-md bg-zinc-900 px-3 py-2 text-sm text-zinc-400">Khong tim thay playlist nay.</p>
+        <p className="rounded-md bg-zinc-900 px-3 py-2 text-sm text-zinc-400">Không tìm thấy playlist này.</p>
       ) : displayedSongs.length === 0 ? (
-        <p className="rounded-md bg-zinc-900 px-3 py-2 text-sm text-zinc-400">Playlist nay chua co bai hat.</p>
+        <p className="rounded-md bg-zinc-900 px-3 py-2 text-sm text-zinc-400">Playlist này chưa có bài hát.</p>
       ) : (
         <section>
           <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
             <div>
               <h2 className="type-display-title">Tracks</h2>
               <p className="type-body-muted">
-                Top {displayedSongs.length} • {isManualOrder ? 'Keo bang nut ≡ de sap xep' : 'Dang sap xep, tat drag reorder'}
+                Top {displayedSongs.length} • {isManualOrder ? 'Kéo bằng nút ≡ để sắp xếp' : 'Đang sắp xếp, tắt drag reorder'}
               </p>
             </div>
 
@@ -426,8 +426,8 @@ function PlaylistPage({
                   }}
                   onClick={(event) => event.preventDefault()}
                   className="rounded bg-zinc-800 px-2 py-1 text-xs text-zinc-300 hover:bg-zinc-700 disabled:opacity-50"
-                  title="Keo de doi vi tri bai hat"
-                  aria-label="Keo de doi vi tri bai hat"
+                  title="Keo de doi vi tri bài hát"
+                  aria-label="Keo de doi vi tri bài hát"
                   disabled={!isManualOrder}
                 >
                   ≡
@@ -497,7 +497,7 @@ function PlaylistPage({
                   disabled={!isManualOrder || manualIndex === 0 || playlistActionLoadingId === `reorder-${playlist._id}-${manualIndex}`}
                   onClick={() => handleMoveSongInPlaylist(playlist._id, manualIndex, -1)}
                   className="rounded bg-zinc-800 px-2 py-1 text-[11px] text-zinc-200 hover:bg-zinc-700 disabled:opacity-60"
-                  title="Dua bai hat len tren"
+                  title="Dua bài hát len tren"
                 >
                   ↑
                 </button>
@@ -506,7 +506,7 @@ function PlaylistPage({
                   disabled={!isManualOrder || manualIndex === orderedSongs.length - 1 || playlistActionLoadingId === `reorder-${playlist._id}-${manualIndex}`}
                   onClick={() => handleMoveSongInPlaylist(playlist._id, manualIndex, 1)}
                   className="rounded bg-zinc-800 px-2 py-1 text-[11px] text-zinc-200 hover:bg-zinc-700 disabled:opacity-60"
-                  title="Dua bai hat xuong duoi"
+                  title="Dua bài hát xuong duoi"
                 >
                   ↓
                 </button>
@@ -543,3 +543,5 @@ function PlaylistPage({
 }
 
 export default PlaylistPage
+
+

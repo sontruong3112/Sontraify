@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+﻿import { useEffect, useMemo, useRef, useState } from 'react'
 
 const PLAYER_VOLUME_KEY = 'music_player_volume'
 const PLAYER_REPEAT_MODE_KEY = 'music_player_repeat_mode'
@@ -71,7 +71,7 @@ export function useAudioPlayer({
     }
 
     if (!highlightedSong.audioUrl) {
-      onError?.('Bai hat nay chua co link audio de phat')
+      onError?.('Bài hát này chưa có link audio để phát')
       return
     }
 
@@ -335,3 +335,4 @@ export function useAudioPlayer({
     onEnded,
   }
 }
+

@@ -24,7 +24,7 @@ describe('RightSidebar', () => {
       />,
     )
 
-    fireEvent.click(screen.getByRole('button', { name: /dang xuat/i }))
+    fireEvent.click(screen.getByRole('button', { name: /đăng xuất/i }))
     expect(handleLogout).toHaveBeenCalled()
   })
 

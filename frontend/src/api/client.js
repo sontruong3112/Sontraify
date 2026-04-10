@@ -413,6 +413,16 @@ export const socialApi = {
     });
   },
 
+  getFriendPresence: (tokenOrFriendId, friendIdMaybe) => {
+    const { token, id } = resolveTokenId(tokenOrFriendId, friendIdMaybe);
+
+    return apiRequest({
+      endpoint: `/social/friends/${id}/presence`,
+      token,
+      requiresAuth: true,
+    });
+  },
+
   getFriendRequests: (token) => {
     return apiRequest({
       endpoint: "/social/friends/requests",
@@ -489,6 +499,17 @@ export const socialApi = {
       method: "POST",
       token,
       body: payload,
+      requiresAuth: true,
+    });
+  },
+
+  markConversationSeen: (tokenOrFriendId, friendIdMaybe) => {
+    const { token, id } = resolveTokenId(tokenOrFriendId, friendIdMaybe);
+
+    return apiRequest({
+      endpoint: `/social/conversations/${id}/seen`,
+      method: "POST",
+      token,
       requiresAuth: true,
     });
   },

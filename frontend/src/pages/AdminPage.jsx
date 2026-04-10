@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import { formatDuration } from '../utils/formatDuration'
 
 function AdminPage({
@@ -24,7 +24,7 @@ function AdminPage({
       <section className="rounded-lg bg-[#181818] p-3">
         <h2 className="mb-3 text-lg font-semibold">Admin song manager</h2>
         <form className="grid gap-2 sm:grid-cols-2" onSubmit={handleCreateOrUpdateSong}>
-          <input name="title" value={adminSongForm.title} onChange={handleAdminSongInput} placeholder="Ten bai hat" className="rounded-md bg-zinc-900 px-3 py-2 text-sm" required />
+          <input name="title" value={adminSongForm.title} onChange={handleAdminSongInput} placeholder="Ten bài hát" className="rounded-md bg-zinc-900 px-3 py-2 text-sm" required />
           <input name="artist" value={adminSongForm.artist} onChange={handleAdminSongInput} placeholder="Nghe si" className="rounded-md bg-zinc-900 px-3 py-2 text-sm" required />
           <input name="genre" value={adminSongForm.genre} onChange={handleAdminSongInput} placeholder="The loai" className="rounded-md bg-zinc-900 px-3 py-2 text-sm" required />
           <input name="audioUrl" value={adminSongForm.audioUrl} onChange={handleAdminSongInput} placeholder="Audio URL" className="rounded-md bg-zinc-900 px-3 py-2 text-sm" required />
@@ -36,7 +36,7 @@ function AdminPage({
               disabled={audioUploadLoading || songMutationLoading}
               className="type-button-sm w-full rounded-md bg-zinc-800 px-3 py-2 hover:bg-zinc-700 disabled:opacity-70"
             >
-              {audioUploadLoading ? 'Dang upload bai hat...' : 'Tai bai hat tu may tinh'}
+              {audioUploadLoading ? 'Đang upload bài hát...' : 'Tải bài hát từ máy tính'}
             </button>
             <input
               ref={audioFileInputRef}
@@ -54,7 +54,7 @@ function AdminPage({
               disabled={coverUploadLoading || songMutationLoading}
               className="type-button-sm w-full rounded-md bg-zinc-800 px-3 py-2 hover:bg-zinc-700 disabled:opacity-70"
             >
-              {coverUploadLoading ? 'Dang upload cover...' : 'Tai anh cover'}
+              {coverUploadLoading ? 'Đang upload cover...' : 'Tải ảnh cover'}
             </button>
             <input
               ref={coverFileInputRef}
@@ -67,7 +67,7 @@ function AdminPage({
           </div>
           <div className="sm:col-span-2 flex gap-2">
             <button type="submit" disabled={songMutationLoading} className="type-button-sm rounded-md bg-green-500 px-4 py-2 text-black">
-              {songMutationLoading ? 'Dang luu...' : editingSongId ? 'Cap nhat bai hat' : 'Tao bai hat'}
+              {songMutationLoading ? 'Đang lưu...' : editingSongId ? 'Cập nhật bài hát' : 'Tạo bài hát'}
             </button>
             {editingSongId && (
               <button type="button" onClick={resetAdminSongForm} className="type-button-sm rounded-md bg-zinc-800 px-4 py-2">Huy</button>
@@ -78,7 +78,7 @@ function AdminPage({
       </section>
 
       <section className="rounded-lg bg-[#181818] p-3">
-        <h2 className="mb-3 text-lg font-semibold">Danh sach bai hat</h2>
+        <h2 className="mb-3 text-lg font-semibold">Danh sach bài hát</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="type-table-head text-zinc-500">
@@ -112,3 +112,5 @@ function AdminPage({
 }
 
 export default AdminPage
+
+

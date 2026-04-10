@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+﻿import React, { useEffect, useState } from 'react'
 
 function UserPage({
   currentUser,
@@ -131,7 +131,7 @@ function UserPage({
       if (playlistId) {
         setSelectedPlaylistBySong((prev) => ({ ...prev, [songId]: playlistId }))
         handleAddSongToPlaylist(songId, playlistId)
-        onShowToast('Da them vao playlist')
+        onShowToast('Đã thêm vao playlist')
       }
     }
 
@@ -140,7 +140,7 @@ function UserPage({
 
   return (
     <>
-      {loading && <p className="rounded-md bg-zinc-900 px-3 py-2 text-sm text-zinc-400">Dang tai bai hat...</p>}
+      {loading && <p className="rounded-md bg-zinc-900 px-3 py-2 text-sm text-zinc-400">Đang tải bài hát...</p>}
       {error && <p className="rounded-md bg-red-500/20 px-3 py-2 text-sm text-red-200">{error}</p>}
       {playlistError && <p className="rounded-md bg-red-500/20 px-3 py-2 text-sm text-red-200">{playlistError}</p>}
 
@@ -152,7 +152,7 @@ function UserPage({
                 <div>
                   <p className="type-kicker text-zinc-300">Artist radio</p>
                   <h2 className="type-display-title mt-1">{activeArtist}</h2>
-                  <p className="type-body-muted mt-1 text-zinc-300">Top tracks va bai hat lien quan cua nghe si nay.</p>
+                  <p className="type-body-muted mt-1 text-zinc-300">Top tracks và bài hát liên quan của nghệ sĩ này.</p>
                 </div>
                 <button
                   type="button"
@@ -165,7 +165,7 @@ function UserPage({
 
               {artistRadioSongs.length === 0 ? (
                 <p className="mt-4 rounded-md bg-black/30 px-3 py-2 text-sm text-zinc-300">
-                  Chua tim thay bai hat nao cho nghe si nay.
+                  Chưa tìm thấy bài hát nào cho nghệ sĩ này.
                 </p>
               ) : (
                 <div className="mt-4 space-y-2">
@@ -330,12 +330,12 @@ function UserPage({
             <section className="mb-8">
               <div className="mb-3 flex items-end justify-between">
                 <h2 className="type-display-title truncate" title={selectedPlaylist.name}>{selectedPlaylist.name}</h2>
-                <p className="type-body-muted">{selectedPlaylist.songs?.length || 0} bai hat</p>
+                <p className="type-body-muted">{selectedPlaylist.songs?.length || 0} bài hát</p>
               </div>
 
               {!selectedPlaylist.songs?.length ? (
                 <p className="rounded-md bg-zinc-900 px-3 py-2 text-sm text-zinc-400">
-                  Playlist nay chua co bai hat. Hay them bai hat tu Recommended Stations.
+                  Playlist này chưa có bài hát. Hãy thêm bài hát từ Recommended Stations.
                 </p>
               ) : (
                 <div className="space-y-2">
@@ -359,7 +359,7 @@ function UserPage({
                         onClick={() => handleRemoveSongFromPlaylist(selectedPlaylist._id, song._id)}
                         className="type-button-sm rounded bg-red-500/20 px-2 py-1 text-red-200 disabled:opacity-70"
                       >
-                        {playlistActionLoadingId === `remove-${selectedPlaylist._id}-${song._id}` ? '...' : 'Xoa'}
+                        {playlistActionLoadingId === `remove-${selectedPlaylist._id}-${song._id}` ? '...' : 'Xóa'}
                       </button>
 
                       <button
@@ -412,7 +412,7 @@ function UserPage({
             <section className="mb-8">
               <div className="mb-3 flex items-end justify-between">
                 <h2 className="type-display-title">Liked Songs</h2>
-                <p className="type-body-muted">{likedSongs.length} bai hat</p>
+                <p className="type-body-muted">{likedSongs.length} bài hát</p>
               </div>
               <div className="space-y-2">
                 {likedSongs.slice(0, 20).map((song) => (
@@ -472,7 +472,7 @@ function UserPage({
 
           {searchQuery.trim() && filteredSongs.length === 0 && (
             <p className="rounded-md bg-zinc-900 px-3 py-2 text-sm text-zinc-400">
-              Khong tim thay bai hat phu hop voi tu khoa "{searchQuery}"
+              Không tìm thấy bài hát phù hợp với từ khóa "{searchQuery}"
             </p>
           )}
 
@@ -514,3 +514,5 @@ function UserPage({
 }
 
 export default UserPage
+
+

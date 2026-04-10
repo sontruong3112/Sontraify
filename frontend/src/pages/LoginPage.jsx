@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 
 function LoginPage({
   authMode,
@@ -24,12 +24,12 @@ function LoginPage({
     const oauthClient = window.google?.accounts?.oauth2
 
     if (!hasValidGoogleClientId) {
-      setAuthError('VITE_GOOGLE_CLIENT_ID chua duoc cau hinh hop le tren frontend')
+      setAuthError('VITE_GOOGLE_CLIENT_ID chưa được cấu hình hợp lệ trên frontend')
       return
     }
 
     if (!oauthClient) {
-      setAuthError('Google SDK chua san sang, vui long thu lai')
+      setAuthError('Google SDK chưa sẵn sàng, vui lòng thử lại')
       return
     }
 
@@ -42,18 +42,18 @@ function LoginPage({
       callback: async (response) => {
         try {
           if (!response?.access_token) {
-            throw new Error('Khong lay duoc access token tu Google')
+            throw new Error('Không lấy được access token từ Google')
           }
 
           await handleGoogleLogin(response.access_token)
         } catch (error) {
-          setAuthError(error?.message || 'Dang nhap Google that bai')
+          setAuthError(error?.message || 'Đăng nhập Google thất bại')
         } finally {
           setGoogleLoading(false)
         }
       },
       error_callback: () => {
-        setAuthError('Dang nhap Google da bi huy hoac that bai')
+        setAuthError('Đăng nhập Google đã bị hủy hoặc thất bại')
         setGoogleLoading(false)
       },
     })
@@ -82,7 +82,7 @@ function LoginPage({
             }}
             className={`flex-1 rounded-full px-3 py-2 ${authMode === 'login' ? 'bg-white text-black' : 'text-zinc-400'}`}
           >
-            Dang nhap
+            Đăng nhập
           </button>
           <button
             type="button"
@@ -92,7 +92,7 @@ function LoginPage({
             }}
             className={`flex-1 rounded-full px-3 py-2 ${authMode === 'register' ? 'bg-white text-black' : 'text-zinc-400'}`}
           >
-            Dang ky
+            Đăng ký
           </button>
         </div>
 
@@ -131,7 +131,7 @@ function LoginPage({
             disabled={authLoading || googleLoading}
             className="w-full rounded-full bg-green-500 px-3 py-3 text-sm font-semibold text-black transition hover:bg-green-400 disabled:opacity-70"
           >
-            {authLoading ? 'Vui long cho...' : authMode === 'register' ? 'Tao tai khoan' : 'Continue'}
+            {authLoading ? 'Vui lòng chờ...' : authMode === 'register' ? 'Tạo tài khoản' : 'Continue'}
           </button>
         </form>
 
@@ -149,12 +149,12 @@ function LoginPage({
             <path fill="#FBBC05" d="M5.27 14.39A7.2 7.2 0 014.9 12c0-.83.14-1.63.37-2.39v-3.1H1.27A11.99 11.99 0 000 12c0 1.93.46 3.75 1.27 5.49l4-3.1z" />
             <path fill="#EA4335" d="M12 4.66c1.76 0 3.34.6 4.58 1.78l3.43-3.43C17.95 1.07 15.24 0 12 0 7.3 0 3.25 2.69 1.27 6.51l4 3.1A7.18 7.18 0 0112 4.66z" />
           </svg>
-          {googleLoading ? 'Dang ket noi Google...' : 'Continue with Google'}
+          {googleLoading ? 'Đang kết nối Google...' : 'Continue with Google'}
         </button>
 
         {!hasValidGoogleClientId && (
           <p className="mt-3 rounded bg-amber-500/20 px-2 py-1 text-xs text-amber-200">
-            Can cau hinh VITE_GOOGLE_CLIENT_ID trong frontend/.env de dung Google login.
+            Cần cấu hình VITE_GOOGLE_CLIENT_ID trong frontend/.env để dùng Google login.
           </p>
         )}
 
@@ -187,3 +187,5 @@ function LoginPage({
 }
 
 export default LoginPage
+
+

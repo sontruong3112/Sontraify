@@ -30,9 +30,9 @@ describe('LeftSidebar', () => {
     )
 
     fireEvent.click(screen.getByRole('button', { name: /home/i }))
-    fireEvent.change(screen.getByPlaceholderText(/tao playlist/i), { target: { value: 'Focus' } })
-    fireEvent.submit(screen.getByRole('button', { name: /^tao$/i }).closest('form'))
-    fireEvent.click(screen.getByRole('button', { name: /xoa/i }))
+    fireEvent.change(screen.getByPlaceholderText(/tạo playlist/i), { target: { value: 'Focus' } })
+    fireEvent.submit(screen.getByRole('button', { name: /^tạo$/i }).closest('form'))
+    fireEvent.click(screen.getByRole('button', { name: /xóa/i }))
     fireEvent.click(screen.getByRole('button', { name: /mina lee/i }))
 
     expect(handleGoHome).toHaveBeenCalled()

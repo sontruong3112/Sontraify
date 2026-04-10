@@ -38,9 +38,17 @@ export const listMessagesValidator = [
 
 export const sendMessageValidator = [
   ...conversationParamValidator,
+  body("clientTempId")
+    .optional()
+    .isString()
+    .trim()
+    .isLength({ max: 80 })
+    .withMessage("clientTempId must be at most 80 characters"),
   body("text")
     .isString()
     .trim()
     .isLength({ min: 1, max: 1000 })
     .withMessage("text must be between 1 and 1000 characters"),
 ];
+
+export const markSeenValidator = [...conversationParamValidator];

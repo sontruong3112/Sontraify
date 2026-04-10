@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+﻿import React, { useMemo, useState } from 'react'
 import { formatDuration } from '../utils/formatDuration'
 
 function ArtistPage({
@@ -39,7 +39,7 @@ function ArtistPage({
           <div className="min-w-0">
             <h1 className="type-display-hero truncate">{artistName || 'Unknown Artist'}</h1>
             <p className="type-body-muted mt-2 text-zinc-200/90">
-              {artistSongs.length} bai hat trong thu vien cua nghe si nay
+              {artistSongs.length} bài hát trong thư viện của nghệ sĩ này
             </p>
           </div>
 
@@ -65,7 +65,7 @@ function ArtistPage({
 
       {!artistSongs.length ? (
         <p className="rounded-md bg-zinc-900 px-3 py-2 text-sm text-zinc-400">
-          Chua co bai hat nao cho nghe si nay.
+          Chưa có bài hát nào cho nghệ sĩ này.
         </p>
       ) : (
         <section className="mb-8">
@@ -174,3 +174,5 @@ function ArtistPage({
 }
 
 export default ArtistPage
+
+

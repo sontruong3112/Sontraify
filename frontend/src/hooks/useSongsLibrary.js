@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { songsApi, uploadsApi } from '../api/client'
 
 const readAudioDuration = (file) => {
@@ -18,7 +18,7 @@ const readAudioDuration = (file) => {
       cleanup()
 
       if (!Number.isFinite(seconds) || seconds <= 0) {
-        reject(new Error('Khong the doc thoi luong cua file nhac'))
+        reject(new Error('Không thể đọc thời lượng của file nhạc'))
         return
       }
 
@@ -27,7 +27,7 @@ const readAudioDuration = (file) => {
 
     audio.onerror = () => {
       cleanup()
-      reject(new Error('Khong the doc metadata cua file nhac'))
+      reject(new Error('Không thể đọc metadata của file nhạc'))
     }
 
     audio.src = objectUrl
@@ -64,7 +64,7 @@ export function useSongsLibrary({ accessToken, initialTrackId, onSongsChanged } 
         onSongsChanged?.(items)
       }
     } catch (requestError) {
-      setError(requestError.message || 'Khong the tai bai hat luc nay')
+      setError(requestError.message || 'Không thể tải bài hát lúc này')
     } finally {
       setLoading(false)
     }
@@ -97,7 +97,7 @@ export function useSongsLibrary({ accessToken, initialTrackId, onSongsChanged } 
 
   const uploadToCloudinary = async ({ file, resourceType, folder }) => {
     if (!accessToken) {
-      throw new Error('Vui long dang nhap admin truoc khi upload')
+      throw new Error('Vui lòng đăng nhập admin trước khi upload')
     }
 
     const signedData = await uploadsApi.createSignature(accessToken, {
@@ -121,7 +121,7 @@ export function useSongsLibrary({ accessToken, initialTrackId, onSongsChanged } 
     const data = await response.json()
 
     if (!response.ok) {
-      throw new Error(data?.error?.message || 'Upload Cloudinary that bai')
+      throw new Error(data?.error?.message || 'Upload Cloudinary thất bại')
     }
 
     return data.secure_url || data.url || ''
@@ -146,7 +146,7 @@ export function useSongsLibrary({ accessToken, initialTrackId, onSongsChanged } 
       })
 
       if (!uploadedUrl) {
-        throw new Error('Khong nhan duoc URL file nhac tu Cloudinary')
+        throw new Error('Không nhận được URL file nhạc từ Cloudinary')
       }
 
       setAdminSongForm((prev) => ({
@@ -155,7 +155,7 @@ export function useSongsLibrary({ accessToken, initialTrackId, onSongsChanged } 
         duration: String(duration),
       }))
     } catch (requestError) {
-      setSongMutationError(requestError.message || 'Upload file nhac that bai')
+      setSongMutationError(requestError.message || 'Upload file nhạc thất bại')
     } finally {
       setAudioUploadLoading(false)
     }
@@ -179,12 +179,12 @@ export function useSongsLibrary({ accessToken, initialTrackId, onSongsChanged } 
       })
 
       if (!uploadedUrl) {
-        throw new Error('Khong nhan duoc URL cover tu Cloudinary')
+        throw new Error('Không nhận được URL cover từ Cloudinary')
       }
 
       setAdminSongForm((prev) => ({ ...prev, coverUrl: uploadedUrl }))
     } catch (requestError) {
-      setSongMutationError(requestError.message || 'Upload cover that bai')
+      setSongMutationError(requestError.message || 'Upload cover thất bại')
     } finally {
       setCoverUploadLoading(false)
     }
@@ -216,7 +216,7 @@ export function useSongsLibrary({ accessToken, initialTrackId, onSongsChanged } 
       await loadSongs()
       await onSongsChanged?.()
     } catch (requestError) {
-      setSongMutationError(requestError.message || 'Khong the luu bai hat')
+      setSongMutationError(requestError.message || 'Không thể lưu bài hát')
     } finally {
       setSongMutationLoading(false)
     }
@@ -247,7 +247,7 @@ export function useSongsLibrary({ accessToken, initialTrackId, onSongsChanged } 
         resetAdminSongForm()
       }
     } catch (requestError) {
-      setSongMutationError(requestError.message || 'Khong the xoa bai hat')
+      setSongMutationError(requestError.message || 'Không thể xóa bài hát')
     } finally {
       setSongMutationLoading(false)
     }
@@ -275,3 +275,4 @@ export function useSongsLibrary({ accessToken, initialTrackId, onSongsChanged } 
     handleDeleteSong,
   }
 }
+

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+﻿import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { authApi } from './api/client'
 import { getInitialTrackId, useAudioPlayer } from './hooks/useAudioPlayer'
@@ -848,7 +848,7 @@ function App() {
     }
 
     onUnauthorized?.()
-    showPlayerToast('Vui long dang nhap de su dung tinh nang nay')
+    showPlayerToast('Vui lòng đăng nhập để sử dụng tính năng này')
     handleOpenLogin(mode)
     return unauthorizedReturn
   }
@@ -953,7 +953,7 @@ function App() {
     navigate(`/artist/${encodeURIComponent(value)}`)
     setActiveArtist(value)
     setSearchQuery('')
-    showPlayerToast(`Mo radio: ${value}`)
+    showPlayerToast(`Mở radio: ${value}`)
   }
 
   const handleOpenPlaylistPage = (playlistId) => {
@@ -1048,21 +1048,21 @@ function App() {
       if (event.code === 'Space') {
         event.preventDefault()
         handleTogglePlayPause()
-        showPlayerToast(isPlaying ? 'Tam dung' : 'Dang phat')
+        showPlayerToast(isPlaying ? 'Tạm dừng' : 'Đang phát')
         return
       }
 
       if ((event.ctrlKey || event.metaKey) && event.key === 'ArrowRight') {
         event.preventDefault()
         handleNextTrack()
-        showPlayerToast('Bai tiep theo')
+        showPlayerToast('Bài tiếp theo')
         return
       }
 
       if ((event.ctrlKey || event.metaKey) && event.key === 'ArrowLeft') {
         event.preventDefault()
         handlePrevTrack()
-        showPlayerToast('Bai truoc')
+        showPlayerToast('Bài trước')
         return
       }
 
@@ -1083,7 +1083,7 @@ function App() {
       if (event.key === 'm' || event.key === 'M') {
         event.preventDefault()
         handleToggleMute()
-        showPlayerToast(volume > 0 ? 'Tat tieng' : 'Bat tieng')
+        showPlayerToast(volume > 0 ? 'Tắt tiếng' : 'Bật tiếng')
         return
       }
 
@@ -1091,7 +1091,7 @@ function App() {
         if (highlightedSong?._id) {
           event.preventDefault()
           toggleLikeSong(highlightedSong._id)
-          showPlayerToast(isSongLiked(highlightedSong._id) ? 'Bo yeu thich' : 'Da yeu thich')
+          showPlayerToast(isSongLiked(highlightedSong._id) ? 'Bỏ yêu thích' : 'Đã yêu thích')
         }
         return
       }
@@ -1106,14 +1106,14 @@ function App() {
       if (event.key === 'r' || event.key === 'R') {
         event.preventDefault()
         handleCycleRepeatMode()
-        showPlayerToast('Doi che do lap lai')
+        showPlayerToast('Đổi chế độ lặp lại')
         return
       }
 
       if (event.key === 'q' || event.key === 'Q') {
         event.preventDefault()
         handleOpenQueuePanel()
-        showPlayerToast('Mo hang doi')
+        showPlayerToast('Mở hàng đợi')
       }
     }
 
@@ -1294,7 +1294,7 @@ function App() {
                   type="button"
                   onClick={() => setIsMobileSidebarOpen(true)}
                   className="rounded-full bg-black/40 p-2 xl:hidden"
-                  title="Mo sidebar"
+                  title="Mở sidebar"
                 >
                   <Icon className="h-4 w-4"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></Icon>
                 </button>
@@ -1304,7 +1304,7 @@ function App() {
                   type="button"
                   onClick={handleToggleLeftSidebar}
                   className={`hidden rounded-full p-2 xl:block ${isLeftSidebarCollapsed ? 'bg-zinc-700 text-white' : 'bg-black/40 text-zinc-300'}`}
-                  title={isLeftSidebarCollapsed ? 'Mo rong sidebar trai' : 'Thu gon sidebar trai'}
+                  title={isLeftSidebarCollapsed ? 'Mở rộng sidebar trái' : 'Thu gọn sidebar trái'}
                 >
                   <Icon className="h-4 w-4"><path d="M4 4h6v16H4V4zm10 0h6v16h-6V4z"/></Icon>
                 </button>
@@ -1391,7 +1391,7 @@ function App() {
                             disabled={authLoading}
                             className="type-button-sm mt-1 w-full rounded-md px-2 py-2 text-left text-zinc-200 hover:bg-white/10 disabled:opacity-70"
                           >
-                            {authLoading ? 'Dang dang xuat...' : 'Log out'}
+                            {authLoading ? 'Đang đăng xuất...' : 'Log out'}
                           </button>
                         </div>
                       )}
@@ -1597,3 +1597,5 @@ function App() {
 }
 
 export default App
+
+

@@ -68,6 +68,6 @@ describe('AccountPage', () => {
     })
 
     expect(onUpdateProfile).not.toHaveBeenCalled()
-    expect(screen.getByText(/avatar url khong hop le/i)).toBeInTheDocument()
+    expect(screen.getByText(/avatar url không hợp lệ/i)).toBeInTheDocument()
   })
 })

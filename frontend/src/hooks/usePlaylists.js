@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { playlistsApi, uploadsApi } from '../api/client'
 
 export function usePlaylists({ currentUser, accessToken } = {}) {
@@ -13,7 +13,7 @@ export function usePlaylists({ currentUser, accessToken } = {}) {
 
   const uploadPlaylistCoverToCloudinary = async (file) => {
     if (!accessToken) {
-      throw new Error('Vui long dang nhap truoc khi upload cover')
+      throw new Error('Vui lòng đăng nhập trước khi upload cover')
     }
 
     const signedData = await uploadsApi.createSignature(accessToken, {
@@ -37,7 +37,7 @@ export function usePlaylists({ currentUser, accessToken } = {}) {
     const data = await response.json()
 
     if (!response.ok) {
-      throw new Error(data?.error?.message || 'Upload Cloudinary that bai')
+      throw new Error(data?.error?.message || 'Upload Cloudinary thất bại')
     }
 
     return data.secure_url || data.url || ''
@@ -71,7 +71,7 @@ export function usePlaylists({ currentUser, accessToken } = {}) {
     } catch (requestError) {
       setPlaylists([])
       setSelectedPlaylistId('')
-      setPlaylistError(requestError.message || 'Khong the tai playlist')
+      setPlaylistError(requestError.message || 'Không thể tải playlist')
     } finally {
       setPlaylistLoading(false)
     }
@@ -87,12 +87,12 @@ export function usePlaylists({ currentUser, accessToken } = {}) {
     const normalizedName = playlistName.trim()
 
     if (!normalizedName) {
-      setPlaylistError('Ten playlist khong duoc de trong')
+      setPlaylistError('Tên playlist không được để trống')
       return
     }
 
     if (playlists.some((playlist) => playlist.name.toLowerCase() === normalizedName.toLowerCase())) {
-      setPlaylistError('Playlist nay da ton tai')
+      setPlaylistError('Playlist này đã tồn tại')
       return
     }
 
@@ -103,7 +103,7 @@ export function usePlaylists({ currentUser, accessToken } = {}) {
       setPlaylistName('')
       await loadPlaylists()
     } catch (requestError) {
-      setPlaylistError(requestError.message || 'Khong the tao playlist')
+      setPlaylistError(requestError.message || 'Không thể tạo playlist')
     } finally {
       setPlaylistActionLoadingId('')
     }
@@ -113,7 +113,7 @@ export function usePlaylists({ currentUser, accessToken } = {}) {
     const selectedId = playlistIdOverride || selectedPlaylistBySong[songId] || playlists[0]?._id
 
     if (!selectedId) {
-      setPlaylistError('Vui long tao playlist truoc')
+      setPlaylistError('Vui lòng tạo playlist trước')
       return
     }
 
@@ -123,7 +123,7 @@ export function usePlaylists({ currentUser, accessToken } = {}) {
       await playlistsApi.addSong(accessToken, selectedId, songId)
       await loadPlaylists()
     } catch (requestError) {
-      setPlaylistError(requestError.message || 'Khong the them bai hat vao playlist')
+      setPlaylistError(requestError.message || 'Không thể thêm bài hát vào playlist')
     } finally {
       setPlaylistActionLoadingId('')
     }
@@ -136,7 +136,7 @@ export function usePlaylists({ currentUser, accessToken } = {}) {
       await playlistsApi.removeSong(accessToken, playlistId, songId)
       await loadPlaylists()
     } catch (requestError) {
-      setPlaylistError(requestError.message || 'Khong the xoa bai hat khoi playlist')
+      setPlaylistError(requestError.message || 'Không thể xóa bài hát khoi playlist')
     } finally {
       setPlaylistActionLoadingId('')
     }
@@ -153,7 +153,7 @@ export function usePlaylists({ currentUser, accessToken } = {}) {
       await playlistsApi.reorderSong(accessToken, playlistId, { index, direction })
       await loadPlaylists()
     } catch (requestError) {
-      setPlaylistError(requestError.message || 'Khong the sap xep lai playlist')
+      setPlaylistError(requestError.message || 'Không thể sắp xếp lại playlist')
     } finally {
       setPlaylistActionLoadingId('')
     }
@@ -192,7 +192,7 @@ export function usePlaylists({ currentUser, accessToken } = {}) {
       await loadPlaylists()
       return true
     } catch (requestError) {
-      setPlaylistError(requestError.message || 'Khong the sap xep lai playlist')
+      setPlaylistError(requestError.message || 'Không thể sắp xếp lại playlist')
       return false
     } finally {
       setPlaylistActionLoadingId('')
@@ -207,7 +207,7 @@ export function usePlaylists({ currentUser, accessToken } = {}) {
       setSelectedPlaylistId((prev) => (prev === playlistId ? '' : prev))
       await loadPlaylists()
     } catch (requestError) {
-      setPlaylistError(requestError.message || 'Khong the xoa playlist')
+      setPlaylistError(requestError.message || 'Không thể xóa playlist')
     } finally {
       setPlaylistActionLoadingId('')
     }
@@ -221,12 +221,12 @@ export function usePlaylists({ currentUser, accessToken } = {}) {
     }
 
     if (!normalizedName) {
-      setPlaylistError('Ten playlist khong duoc de trong')
+      setPlaylistError('Tên playlist không được để trống')
       return
     }
 
     if (playlists.some((playlist) => playlist._id !== playlistId && playlist.name.toLowerCase() === normalizedName.toLowerCase())) {
-      setPlaylistError('Playlist nay da ton tai')
+      setPlaylistError('Playlist này đã tồn tại')
       return
     }
 
@@ -236,7 +236,7 @@ export function usePlaylists({ currentUser, accessToken } = {}) {
       await playlistsApi.update(accessToken, playlistId, { name: normalizedName })
       await loadPlaylists()
     } catch (requestError) {
-      setPlaylistError(requestError.message || 'Khong the cap nhat playlist')
+      setPlaylistError(requestError.message || 'Không thể cập nhật playlist')
     } finally {
       setPlaylistActionLoadingId('')
     }
@@ -255,7 +255,7 @@ export function usePlaylists({ currentUser, accessToken } = {}) {
       await playlistsApi.update(accessToken, playlistId, { coverUrl })
       await loadPlaylists()
     } catch (requestError) {
-      setPlaylistError(requestError.message || 'Khong the cap nhat anh bia playlist')
+      setPlaylistError(requestError.message || 'Không thể cập nhật ảnh bìa playlist')
     } finally {
       setPlaylistActionLoadingId('')
     }
@@ -272,14 +272,14 @@ export function usePlaylists({ currentUser, accessToken } = {}) {
       const uploadedUrl = await uploadPlaylistCoverToCloudinary(file)
 
       if (!uploadedUrl) {
-        throw new Error('Khong nhan duoc URL cover tu Cloudinary')
+        throw new Error('Không nhận được URL cover từ Cloudinary')
       }
 
       await playlistsApi.update(accessToken, playlistId, { coverUrl: uploadedUrl })
       await loadPlaylists()
       return true
     } catch (requestError) {
-      setPlaylistError(requestError.message || 'Khong the upload anh bia playlist')
+      setPlaylistError(requestError.message || 'Không thể upload ảnh bìa playlist')
       return false
     } finally {
       setPlaylistCoverUploadLoading(false)
@@ -311,3 +311,4 @@ export function usePlaylists({ currentUser, accessToken } = {}) {
     handleUploadPlaylistCover,
   }
 }
+

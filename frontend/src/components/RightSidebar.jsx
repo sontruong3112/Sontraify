@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+﻿import React, { useEffect, useRef } from 'react'
 
 function RightSidebar({
   highlightedSong,
@@ -97,7 +97,7 @@ function RightSidebar({
         </div>
 
         {nextUpSongs.length === 0 ? (
-          <p className="text-xs text-zinc-500">Chua co bai tiep theo trong hang doi.</p>
+          <p className="text-xs text-zinc-500">Chưa có bài tiếp theo trong hàng đợi.</p>
         ) : (
           <div ref={queueListRef} className="max-h-80 space-y-2 overflow-y-auto pr-1">
             {nextUpSongs.map((item, index) => {
@@ -136,7 +136,7 @@ function RightSidebar({
                       type="button"
                       onClick={() => moveSongInQueue(queueIndex, -1)}
                       className="type-button-sm rounded bg-zinc-800 px-1.5 py-1 text-zinc-300 hover:bg-zinc-700"
-                      title="Dua bai hat len tren"
+                      title="Dua bài hát len tren"
                     >
                       ↑
                     </button>
@@ -144,7 +144,7 @@ function RightSidebar({
                       type="button"
                       onClick={() => moveSongInQueue(queueIndex, 1)}
                       className="type-button-sm rounded bg-zinc-800 px-1.5 py-1 text-zinc-300 hover:bg-zinc-700"
-                      title="Dua bai hat xuong duoi"
+                      title="Dua bài hát xuong duoi"
                     >
                       ↓
                     </button>
@@ -152,7 +152,7 @@ function RightSidebar({
                       type="button"
                       onClick={() => removeSongFromQueueAt(queueIndex)}
                       className="type-button-sm rounded bg-zinc-800 px-1.5 py-1 text-zinc-300 hover:bg-zinc-700"
-                      title="Xoa bai hat khoi hang doi"
+                      title="Xóa bài hát khỏi hàng đợi"
                     >
                       X
                     </button>
@@ -166,11 +166,11 @@ function RightSidebar({
       </section>
 
       <section className="mt-2 rounded-lg bg-[#181818] p-4">
-        {sessionLoading && <p className="text-sm text-zinc-400">Dang khoi tao...</p>}
+        {sessionLoading && <p className="text-sm text-zinc-400">Đang khởi tạo...</p>}
 
         {!sessionLoading && currentUser && (
           <div>
-            <p className="text-sm text-zinc-400">Dang nhap voi</p>
+            <p className="text-sm text-zinc-400">Đăng nhập với</p>
             <p className="text-lg font-semibold">{currentUser.name}</p>
             <p className="text-sm text-zinc-500">{currentUser.email}</p>
             <button
@@ -179,16 +179,16 @@ function RightSidebar({
               disabled={authLoading}
               className="mt-3 w-full rounded-md bg-zinc-800 px-3 py-2 text-sm hover:bg-zinc-700 disabled:opacity-70"
             >
-              {authLoading ? 'Dang dang xuat...' : 'Dang xuat'}
+              {authLoading ? 'Đang đăng xuất...' : 'Đăng xuất'}
             </button>
           </div>
         )}
 
         {!sessionLoading && !currentUser && (
           <div className="rounded-xl border border-white/10 bg-linear-to-b from-zinc-900 to-black p-4 shadow-xl shadow-black/40">
-            <p className="type-body-muted text-xs uppercase tracking-[0.18em] text-zinc-400">Tai khoan</p>
-            <h4 className="mt-1 text-lg font-semibold text-white">Dang nhap de dong bo nhac</h4>
-            <p className="mt-1 text-xs text-zinc-400">Mo trang dang nhap rieng de tiep tuc.</p>
+            <p className="type-body-muted text-xs uppercase tracking-[0.18em] text-zinc-400">Tài khoản</p>
+            <h4 className="mt-1 text-lg font-semibold text-white">Đăng nhập để đồng bộ nhạc</h4>
+            <p className="mt-1 text-xs text-zinc-400">Mở trang đăng nhập riêng để tiếp tục.</p>
             <button
               type="button"
               onClick={() => onOpenLogin('login')}
@@ -215,3 +215,5 @@ function RightSidebar({
 }
 
 export default RightSidebar
+
+

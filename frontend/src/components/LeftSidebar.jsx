@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+﻿import React, { useEffect, useRef, useState } from 'react'
 
 function LeftSidebar({
   Icon,
@@ -90,7 +90,7 @@ function LeftSidebar({
         type="button"
         onDoubleClick={onToggleCollapse}
         className="absolute top-2 right-0 hidden h-[calc(100%-16px)] w-1 translate-x-1/2 cursor-col-resize rounded-full bg-transparent xl:block"
-        title="Double click de thu gon/mo rong sidebar"
+        title="Double click để thu gọn/mở rộng sidebar"
         aria-label="Resize sidebar"
       />
 
@@ -112,7 +112,7 @@ function LeftSidebar({
             type="button"
             onClick={onToggleCollapse}
             className="rounded-full bg-zinc-800 p-2 text-zinc-200 hover:bg-zinc-700"
-            title={isCollapsed ? 'Ghim mo rong sidebar' : 'Thu gon sidebar'}
+            title={isCollapsed ? 'Ghim mở rộng sidebar' : 'Thu gọn sidebar'}
           >
             <Icon className="h-3 w-3">
               {effectiveCollapsed
@@ -177,7 +177,7 @@ function LeftSidebar({
                 <input
                   value={playlistName}
                   onChange={(event) => setPlaylistName(event.target.value)}
-                  placeholder="Tao playlist"
+                  placeholder="Tạo playlist"
                   className="w-full rounded-md bg-zinc-900 px-3 py-2 text-xs"
                 />
                 <button
@@ -185,7 +185,7 @@ function LeftSidebar({
                   disabled={playlistActionLoadingId === 'create'}
                   className="type-button-sm rounded-md bg-white px-2 text-black"
                 >
-                  {playlistActionLoadingId === 'create' ? '...' : 'Tao'}
+                  {playlistActionLoadingId === 'create' ? '...' : 'Tạo'}
                 </button>
               </form>
             )}
@@ -193,12 +193,12 @@ function LeftSidebar({
             <div className="mb-3 max-h-52 space-y-2 overflow-y-auto pr-1">
               <div className="rounded-md bg-linear-to-r from-indigo-500/30 to-sky-500/20 px-2 py-2">
                 <p className="type-kicker truncate text-zinc-200">Liked Songs</p>
-                <p className="text-[11px] text-zinc-300">{likedSongsCount} bai hat da thich</p>
+                <p className="text-[11px] text-zinc-300">{likedSongsCount} bài hát da thich</p>
               </div>
 
-              {playlistLoading && <p className="text-xs text-zinc-500">Dang tai playlist...</p>}
+              {playlistLoading && <p className="text-xs text-zinc-500">Đang tải playlist...</p>}
               {!playlistLoading && playlists.length === 0 && (
-                <p className="text-xs text-zinc-500">Chua co playlist nao</p>
+                <p className="text-xs text-zinc-500">Chưa có playlist nào</p>
               )}
               {playlists.map((playlist) => (
                 <div key={playlist._id} className="rounded-md bg-zinc-900/60 px-2 py-2">
@@ -217,7 +217,7 @@ function LeftSidebar({
                       disabled={playlistActionLoadingId === `delete-${playlist._id}`}
                       className="type-button-sm rounded bg-zinc-800 px-1.5 py-0.5 hover:bg-zinc-700"
                     >
-                      Xoa
+                      Xóa
                     </button>
                   </div>
                 </div>
@@ -230,7 +230,7 @@ function LeftSidebar({
               <button
                 type="button"
                 className="rounded-full bg-zinc-800 p-2 text-xs hover:bg-zinc-700"
-                title="Tao playlist"
+                title="Tạo playlist"
               >
                 +
               </button>
@@ -276,3 +276,5 @@ function LeftSidebar({
 }
 
 export default LeftSidebar
+
+

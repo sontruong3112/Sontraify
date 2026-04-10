@@ -1,6 +1,11 @@
 import mongoose from "mongoose";
 import { Message } from "../models/Message.js";
 import { User } from "../models/User.js";
+import {
+  emitConversationSeen,
+  emitRealtimeMessage,
+  isUserOnline,
+} from "../services/realtimeSocket.js";
 import { fail, ok } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
@@ -228,7 +233,10 @@ export const getFriends = asyncHandler(async (req, res) => {
     .select("friendIds");
 
   const friends = (user?.friendIds || [])
-    .map((friend) => toPublicUser(friend))
+    .map((friend) => ({
+      ...toPublicUser(friend),
+      isOnline: isUserOnline(friend._id.toString()),
+    }))
     .sort((a, b) => a.name.localeCompare(b.name));
 
   return ok(res, {
@@ -301,6 +309,7 @@ export const getConversationMessages = asyncHandler(async (req, res) => {
       receiverId: message.receiverId.toString(),
       text: message.text,
       createdAt: message.createdAt,
+      seenAt: message.seenAt,
     }));
 
   return ok(res, {
@@ -318,6 +327,7 @@ export const sendMessage = asyncHandler(async (req, res) => {
 
   const friendId = String(req.params.friendId || "").trim();
   const text = String(req.body.text || "").trim();
+  const clientTempId = String(req.body.clientTempId || "").trim();
 
   if (!isValidObjectId(friendId)) {
     return fail(res, { statusCode: 400, message: "Invalid friendId" });
@@ -346,12 +356,96 @@ export const sendMessage = asyncHandler(async (req, res) => {
     receiverId: created.receiverId.toString(),
     text: created.text,
     createdAt: created.createdAt,
+    seenAt: created.seenAt,
+    clientTempId: clientTempId || undefined,
   };
+
+  emitRealtimeMessage({
+    participantIds: [currentUser._id.toString(), friendId],
+    message: payload,
+  });
 
   return ok(res, {
     statusCode: 201,
     message: "Message sent",
     data: { message: payload },
     extra: { message: payload },
+  });
+});
+
+export const markConversationSeen = asyncHandler(async (req, res) => {
+  const currentUser = await getAuthUser(req);
+
+  if (!currentUser) {
+    return fail(res, { statusCode: 401, message: "Unauthorized" });
+  }
+
+  const friendId = String(req.params.friendId || "").trim();
+
+  if (!isValidObjectId(friendId)) {
+    return fail(res, { statusCode: 400, message: "Invalid friendId" });
+  }
+
+  if (!ensureFriend(currentUser, friendId)) {
+    return fail(res, { statusCode: 403, message: "You can only mark friends conversations" });
+  }
+
+  const seenAt = new Date();
+
+  const result = await Message.updateMany(
+    {
+      senderId: friendId,
+      receiverId: currentUser._id,
+      seenAt: null,
+    },
+    {
+      $set: { seenAt },
+    }
+  );
+
+  if ((result.modifiedCount || 0) > 0) {
+    emitConversationSeen({
+      participantIds: [currentUser._id.toString(), friendId],
+      payload: {
+        readerId: currentUser._id.toString(),
+        friendId,
+        seenAt: seenAt.toISOString(),
+      },
+    });
+  }
+
+  return ok(res, {
+    message: "Conversation seen updated",
+    data: { seenAt: seenAt.toISOString(), modifiedCount: result.modifiedCount || 0 },
+    extra: { seenAt: seenAt.toISOString(), modifiedCount: result.modifiedCount || 0 },
+  });
+});
+
+export const getFriendPresence = asyncHandler(async (req, res) => {
+  const currentUser = await getAuthUser(req);
+
+  if (!currentUser) {
+    return fail(res, { statusCode: 401, message: "Unauthorized" });
+  }
+
+  const friendId = String(req.params.friendId || "").trim();
+
+  if (!isValidObjectId(friendId)) {
+    return fail(res, { statusCode: 400, message: "Invalid friendId" });
+  }
+
+  if (!ensureFriend(currentUser, friendId)) {
+    return fail(res, { statusCode: 403, message: "Forbidden" });
+  }
+
+  return ok(res, {
+    data: {
+      userId: friendId,
+      isOnline: isUserOnline(friendId),
+    },
+    extra: {
+      userId: friendId,
+      isOnline: isUserOnline(friendId),
+    },
   });
 });

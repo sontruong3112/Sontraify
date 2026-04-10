@@ -1,12 +1,17 @@
 import app from "./app.js";
+import { createServer } from "node:http";
 import { connectDatabase } from "./config/db.js";
 import { env, validateEnv } from "./config/env.js";
+import { initRealtimeSocket } from "./services/realtimeSocket.js";
 
 const bootstrap = async () => {
   validateEnv();
   await connectDatabase();
 
-  app.listen(env.port, () => {
+  const httpServer = createServer(app);
+  initRealtimeSocket(httpServer);
+
+  httpServer.listen(env.port, () => {
     console.log(`Server listening on port ${env.port}`);
   });
 };
