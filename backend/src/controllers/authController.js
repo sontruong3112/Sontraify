@@ -7,6 +7,7 @@ import { fail, ok } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 const REFRESH_COOKIE_NAME = "refreshToken";
+const isProduction = env.nodeEnv === "production";
 
 const hashToken = (token) => {
   return crypto.createHash("sha256").update(token).digest("hex");
@@ -37,8 +38,9 @@ const signTokens = (user) => {
 const setRefreshCookie = (res, refreshToken) => {
   res.cookie(REFRESH_COOKIE_NAME, refreshToken, {
     httpOnly: true,
-    sameSite: "lax",
-    secure: env.nodeEnv === "production",
+    // Cross-origin frontend (Render) -> backend (Railway) requires SameSite=None in production.
+    sameSite: isProduction ? "none" : "lax",
+    secure: isProduction,
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 };
@@ -46,8 +48,8 @@ const setRefreshCookie = (res, refreshToken) => {
 const clearRefreshCookie = (res) => {
   res.clearCookie(REFRESH_COOKIE_NAME, {
     httpOnly: true,
-    sameSite: "lax",
-    secure: env.nodeEnv === "production",
+    sameSite: isProduction ? "none" : "lax",
+    secure: isProduction,
   });
 };
 

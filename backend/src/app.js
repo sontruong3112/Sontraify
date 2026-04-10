@@ -12,18 +12,26 @@ import uploadRoutes from "./routes/uploadRoutes.js";
 
 const app = express();
 
+const normalizeOrigin = (value = "") => String(value).trim().replace(/\/$/, "");
+const allowedClientOrigins = String(env.clientOrigin || "")
+  .split(",")
+  .map((origin) => normalizeOrigin(origin))
+  .filter(Boolean);
+
 const isAllowedDevOrigin = (origin) => {
   if (!origin) {
     return true;
   }
 
-  if (origin === env.clientOrigin) {
+  const normalizedOrigin = normalizeOrigin(origin);
+
+  if (allowedClientOrigins.includes(normalizedOrigin)) {
     return true;
   }
 
   return (
-    origin.startsWith("http://localhost:") ||
-    origin.startsWith("http://127.0.0.1:")
+    normalizedOrigin.startsWith("http://localhost:") ||
+    normalizedOrigin.startsWith("http://127.0.0.1:")
   );
 };
 
