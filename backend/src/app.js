@@ -8,6 +8,7 @@ import { errorHandler, notFoundHandler } from "./middlewares/errorMiddleware.js"
 import authRoutes from "./routes/authRoutes.js";
 import playlistRoutes from "./routes/playlistRoutes.js";
 import songRoutes from "./routes/songRoutes.js";
+import socialRoutes from "./routes/socialRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 
 const app = express();
@@ -60,6 +61,7 @@ app.get("/health", (req, res) => {
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/songs", songRoutes);
 app.use("/api/v1/playlists", playlistRoutes);
+app.use("/api/v1/social", socialRoutes);
 app.use("/api/v1/uploads", uploadRoutes);
 
 app.use(notFoundHandler);

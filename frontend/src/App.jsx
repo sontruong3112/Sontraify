@@ -14,6 +14,7 @@ import AdminPage from './pages/AdminPage'
 import AccountPage from './pages/AccountPage'
 import ArtistPage from './pages/ArtistPage'
 import LoginPage from './pages/LoginPage'
+import MessagesPage from './pages/MessagesPage'
 import PlaylistPage from './pages/PlaylistPage'
 import UserPage from './pages/UserPage'
 
@@ -309,6 +310,7 @@ function App() {
   const isArtistRoute = location.pathname.startsWith('/artist/')
   const isPlaylistRoute = location.pathname.startsWith('/playlist/')
   const isAccountRoute = location.pathname === '/account'
+  const isMessagesRoute = location.pathname === '/messages'
   const isLoginRoute = location.pathname === '/login'
 
   useEffect(() => {
@@ -331,7 +333,7 @@ function App() {
   }, [isLoginRoute, sessionLoading, currentUser, navigate])
 
   useEffect(() => {
-    if (sessionLoading || isLoginRoute || currentUser || (!isPlaylistRoute && !isAccountRoute)) {
+    if (sessionLoading || isLoginRoute || currentUser || (!isPlaylistRoute && !isAccountRoute && !isMessagesRoute)) {
       return
     }
 
@@ -342,7 +344,7 @@ function App() {
     setAuthMode('login')
     setAuthError('')
     navigate('/login', { state: { from: nextFrom } })
-  }, [sessionLoading, isLoginRoute, currentUser, isPlaylistRoute, isAccountRoute, location.pathname, location.search, navigate, setAuthMode, setAuthError])
+  }, [sessionLoading, isLoginRoute, currentUser, isPlaylistRoute, isAccountRoute, isMessagesRoute, location.pathname, location.search, navigate, setAuthMode, setAuthError])
 
   useEffect(() => {
     if (!isUserMenuOpen) {
@@ -941,13 +943,10 @@ function App() {
     playTrackById(songId)
   }
 
-  const handleOpenSearch = () => {
-    navigate('/')
+  const handleOpenMessages = () => {
     setIsMobileSidebarOpen(false)
     setActiveArtist('')
-    window.setTimeout(() => {
-      searchInputRef.current?.focus()
-    }, 0)
+    navigate('/messages')
   }
 
   const handleOpenArtistRadio = (artistName) => {
@@ -1259,11 +1258,11 @@ function App() {
             </button>
             <button
               type="button"
-              onClick={handleOpenSearch}
+              onClick={handleOpenMessages}
               className="type-button-sm flex flex-col items-center justify-center gap-1 rounded-lg px-2 py-2 text-zinc-200 hover:bg-white/10"
             >
-              <Icon className="h-4 w-4"><path d="M10 2a8 8 0 105.29 14l4.35 4.35 1.41-1.41-4.35-4.35A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z"/></Icon>
-              Search
+              <Icon className="h-4 w-4"><path d="M4 5h16a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V7a2 2 0 012-2zm0 2v.5l8 5 8-5V7H4zm16 10V9.85l-7.47 4.67a1 1 0 01-1.06 0L4 9.85V17h16z"/></Icon>
+              Messages
             </button>
             <button
               type="button"
@@ -1293,6 +1292,7 @@ function App() {
           handleDeletePlaylist={handleDeletePlaylistWithAuth}
           artists={artists}
           playTrackById={playTrackById}
+          onOpenMessages={handleOpenMessages}
           isCollapsed={isLeftSidebarCollapsed}
           onToggleCollapse={handleToggleLeftSidebar}
           hoverFlyoutEnabled={isLeftSidebarHoverFlyoutEnabled}
@@ -1342,7 +1342,7 @@ function App() {
                     value={searchQuery}
                     onChange={(event) => {
                       setSearchQuery(event.target.value)
-                      if (activeArtist || isPlaylistRoute) {
+                      if (activeArtist || isPlaylistRoute || isMessagesRoute) {
                         navigate('/')
                         setActiveArtist('')
                       }
@@ -1443,6 +1443,12 @@ function App() {
                 onLogout={handleLogoutFromMenu}
                 authLoading={authLoading}
                 onBackHome={handleGoHome}
+              />
+            ) : isMessagesRoute ? (
+              <MessagesPage
+                currentUser={currentUser}
+                accessToken={accessToken}
+                onOpenLogin={handleOpenLogin}
               />
             ) : isAdminRoute ? (
               <ProtectedAdminRoute isAdmin={isAdmin}>

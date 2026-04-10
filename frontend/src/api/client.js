@@ -387,3 +387,109 @@ export const uploadsApi = {
     });
   },
 };
+
+export const socialApi = {
+  searchUsers: (token, query = "") => {
+    const search = new URLSearchParams();
+
+    if (query) {
+      search.set("q", query);
+    }
+
+    const queryString = search.toString();
+
+    return apiRequest({
+      endpoint: queryString ? `/social/users?${queryString}` : "/social/users",
+      token,
+      requiresAuth: true,
+    });
+  },
+
+  getFriends: (token) => {
+    return apiRequest({
+      endpoint: "/social/friends",
+      token,
+      requiresAuth: true,
+    });
+  },
+
+  getFriendRequests: (token) => {
+    return apiRequest({
+      endpoint: "/social/friends/requests",
+      token,
+      requiresAuth: true,
+    });
+  },
+
+  sendFriendRequest: (tokenOrPayload, payloadMaybe) => {
+    const { token, payload } = resolveTokenPayload(tokenOrPayload, payloadMaybe);
+
+    return apiRequest({
+      endpoint: "/social/friends/requests",
+      method: "POST",
+      token,
+      body: payload,
+      requiresAuth: true,
+    });
+  },
+
+  respondToFriendRequest: (tokenOrUserId, userIdOrPayload, payloadMaybe) => {
+    const { token, id, payload } = resolveTokenIdPayload(
+      tokenOrUserId,
+      userIdOrPayload,
+      payloadMaybe
+    );
+
+    return apiRequest({
+      endpoint: `/social/friends/requests/${id}/respond`,
+      method: "POST",
+      token,
+      body: payload,
+      requiresAuth: true,
+    });
+  },
+
+  listMessages: (tokenOrFriendId, friendIdOrParams, paramsMaybe) => {
+    const { token, id, payload } = resolveTokenIdPayload(
+      tokenOrFriendId,
+      friendIdOrParams,
+      paramsMaybe
+    );
+
+    const search = new URLSearchParams();
+
+    if (payload?.limit) {
+      search.set("limit", String(payload.limit));
+    }
+
+    if (payload?.before) {
+      search.set("before", String(payload.before));
+    }
+
+    const queryString = search.toString();
+
+    return apiRequest({
+      endpoint: queryString
+        ? `/social/conversations/${id}/messages?${queryString}`
+        : `/social/conversations/${id}/messages`,
+      token,
+      requiresAuth: true,
+    });
+  },
+
+  sendMessage: (tokenOrFriendId, friendIdOrPayload, payloadMaybe) => {
+    const { token, id, payload } = resolveTokenIdPayload(
+      tokenOrFriendId,
+      friendIdOrPayload,
+      payloadMaybe
+    );
+
+    return apiRequest({
+      endpoint: `/social/conversations/${id}/messages`,
+      method: "POST",
+      token,
+      body: payload,
+      requiresAuth: true,
+    });
+  },
+};

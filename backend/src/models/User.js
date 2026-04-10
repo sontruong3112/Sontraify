@@ -41,6 +41,33 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    friendIds: {
+      type: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+      ],
+      default: [],
+    },
+    pendingIncomingFriendRequestIds: {
+      type: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+      ],
+      default: [],
+    },
+    pendingOutgoingFriendRequestIds: {
+      type: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+      ],
+      default: [],
+    },
     likedSongIds: {
       type: [
         {

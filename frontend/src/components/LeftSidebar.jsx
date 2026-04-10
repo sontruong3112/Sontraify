@@ -19,6 +19,7 @@ function LeftSidebar({
   onToggleCollapse = () => {},
   hoverFlyoutEnabled = true,
   likedSongsCount = 0,
+  onOpenMessages = () => {},
 }) {
   const [isHoverExpanded, setIsHoverExpanded] = useState(false)
   const openTimerRef = useRef(null)
@@ -140,16 +141,17 @@ function LeftSidebar({
 
         <button
           type="button"
+          onClick={onOpenMessages}
           className={`group relative flex w-full items-center rounded-md px-3 py-2 text-sm text-zinc-300 hover:bg-white/8 ${effectiveCollapsed ? 'justify-center' : 'gap-3'}`}
-          title="Search"
+          title="Messages"
         >
-          <Icon><path d="M10 2a8 8 0 105.29 14l4.35 4.35 1.41-1.41-4.35-4.35A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z"/></Icon>
+          <Icon><path d="M4 5h16a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V7a2 2 0 012-2zm0 2v.5l8 5 8-5V7H4zm16 10V9.85l-7.47 4.67a1 1 0 01-1.06 0L4 9.85V17h16z"/></Icon>
           <span className={`overflow-hidden whitespace-nowrap transition-all duration-300 ease-in-out ${textRevealClass}`}>
-            Search
+            Messages
           </span>
           {effectiveCollapsed && (
             <span className="pointer-events-none absolute left-full ml-2 rounded-md bg-zinc-800 px-2 py-1 text-xs font-semibold text-white opacity-0 shadow-lg transition-opacity duration-200 group-hover:opacity-100">
-              Search
+              Messages
             </span>
           )}
         </button>
