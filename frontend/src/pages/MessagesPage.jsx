@@ -1,5 +1,28 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { socialApi } from '../api/client'
+
+const getInitials = (value = '') => {
+  const words = String(value).trim().split(/\s+/).filter(Boolean)
+
+  if (words.length === 0) {
+    return '?'
+  }
+
+  if (words.length === 1) {
+    return words[0].slice(0, 1).toUpperCase()
+  }
+
+  return `${words[0].slice(0, 1)}${words[1].slice(0, 1)}`.toUpperCase()
+}
+
+const formatMessageTime = (dateValue) => {
+  const date = new Date(dateValue)
+  if (Number.isNaN(date.getTime())) {
+    return ''
+  }
+
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+}
 
 function MessagesPage({ currentUser, accessToken, onOpenLogin = () => {} }) {
   const [friends, setFriends] = useState([])
@@ -14,6 +37,7 @@ function MessagesPage({ currentUser, accessToken, onOpenLogin = () => {} }) {
   const [isLoadingSocial, setIsLoadingSocial] = useState(false)
   const [isLoadingMessages, setIsLoadingMessages] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const messagesViewportRef = useRef(null)
 
   const selectedFriend = useMemo(() => {
     return friends.find((item) => item.id === selectedFriendId) || null
@@ -103,6 +127,14 @@ function MessagesPage({ currentUser, accessToken, onOpenLogin = () => {} }) {
       window.clearInterval(intervalId)
     }
   }, [selectedFriendId, accessToken])
+
+  useEffect(() => {
+    if (!messagesViewportRef.current) {
+      return
+    }
+
+    messagesViewportRef.current.scrollTop = messagesViewportRef.current.scrollHeight
+  }, [messages.length, selectedFriendId])
 
   const handleSearchUsers = async (event) => {
     event.preventDefault()
@@ -202,34 +234,43 @@ function MessagesPage({ currentUser, accessToken, onOpenLogin = () => {} }) {
   }
 
   return (
-    <section className="grid gap-4 lg:grid-cols-[340px_1fr]">
-      <aside className="rounded-2xl border border-white/10 bg-zinc-950/70 p-4">
-        <h2 className="text-lg font-semibold">Friends & Requests</h2>
-        <p className="mt-1 text-xs text-zinc-500">Tim ban, gui loi moi ket ban va quan ly danh sach.</p>
+    <section className="grid gap-4 xl:grid-cols-[360px_1fr]">
+      <aside className="rounded-2xl border border-white/10 bg-linear-to-b from-[#10182b] via-[#0f1726] to-[#090c14] p-4 shadow-xl shadow-black/30">
+        <div className="mb-4 rounded-xl border border-white/10 bg-black/20 p-3">
+          <h2 className="text-lg font-semibold text-white">Messages</h2>
+          <p className="mt-1 text-xs text-zinc-300">Ket ban va nhan tin truc tiep voi nguoi dung trong Sontraify.</p>
+        </div>
 
-        <form onSubmit={handleSearchUsers} className="mt-4 flex gap-2">
+        <form onSubmit={handleSearchUsers} className="flex gap-2">
           <input
             value={userSearchKeyword}
             onChange={(event) => setUserSearchKeyword(event.target.value)}
             placeholder="Tim theo ten hoac email"
-            className="w-full rounded-md bg-zinc-900 px-3 py-2 text-sm"
+            className="w-full rounded-lg border border-white/10 bg-zinc-950/80 px-3 py-2 text-sm text-zinc-100 outline-none ring-green-500/40 transition focus:ring-2"
           />
-          <button type="submit" className="rounded-md bg-zinc-800 px-3 py-2 text-sm hover:bg-zinc-700">Tim</button>
+          <button type="submit" className="rounded-lg bg-green-500 px-3 py-2 text-sm font-semibold text-black transition hover:bg-green-400">Tim</button>
         </form>
 
         {userSearchResults.length > 0 && (
-          <div className="mt-3 max-h-40 space-y-2 overflow-y-auto pr-1">
+          <div className="mt-3 max-h-44 space-y-2 overflow-y-auto pr-1">
             {userSearchResults.map((user) => (
-              <div key={user.id} className="rounded-md bg-zinc-900/80 px-2 py-2 text-sm">
-                <p className="truncate font-medium">{user.name}</p>
-                <p className="truncate text-xs text-zinc-400">{user.email}</p>
+              <div key={user.id} className="rounded-lg border border-white/10 bg-zinc-900/80 px-3 py-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-700 text-xs font-bold text-white">
+                    {getInitials(user.name)}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium text-zinc-100">{user.name}</p>
+                    <p className="truncate text-xs text-zinc-400">{user.email}</p>
+                  </div>
+                </div>
                 <div className="mt-2 flex items-center gap-2">
                   {user.relationship === 'none' && (
                     <button
                       type="button"
                       disabled={isSubmitting}
                       onClick={() => handleSendRequest(user.id)}
-                      className="rounded bg-green-500 px-2 py-1 text-xs font-semibold text-black disabled:opacity-60"
+                      className="rounded-md bg-green-500 px-2 py-1 text-xs font-semibold text-black disabled:opacity-60"
                     >
                       Add Friend
                     </button>
@@ -241,7 +282,7 @@ function MessagesPage({ currentUser, accessToken, onOpenLogin = () => {} }) {
                         type="button"
                         disabled={isSubmitting}
                         onClick={() => handleRespondRequest(user.id, 'accept')}
-                        className="rounded bg-green-500 px-2 py-1 text-xs font-semibold text-black disabled:opacity-60"
+                        className="rounded-md bg-green-500 px-2 py-1 text-xs font-semibold text-black disabled:opacity-60"
                       >
                         Accept
                       </button>
@@ -249,7 +290,7 @@ function MessagesPage({ currentUser, accessToken, onOpenLogin = () => {} }) {
                         type="button"
                         disabled={isSubmitting}
                         onClick={() => handleRespondRequest(user.id, 'decline')}
-                        className="rounded bg-zinc-700 px-2 py-1 text-xs text-zinc-200 disabled:opacity-60"
+                        className="rounded-md bg-zinc-700 px-2 py-1 text-xs text-zinc-200 disabled:opacity-60"
                       >
                         Decline
                       </button>
@@ -262,19 +303,24 @@ function MessagesPage({ currentUser, accessToken, onOpenLogin = () => {} }) {
           </div>
         )}
 
-        <div className="mt-4">
-          <h3 className="text-sm font-semibold text-zinc-200">Incoming requests</h3>
+        <div className="mt-5">
+          <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-300">Incoming Requests</h3>
           <div className="mt-2 space-y-2">
             {incomingRequests.length === 0 && <p className="text-xs text-zinc-500">Khong co loi moi moi.</p>}
             {incomingRequests.map((user) => (
-              <div key={`incoming-${user.id}`} className="rounded-md bg-zinc-900/70 px-2 py-2 text-sm">
-                <p className="truncate">{user.name}</p>
+              <div key={`incoming-${user.id}`} className="rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-700 text-[11px] font-bold text-white">
+                    {getInitials(user.name)}
+                  </div>
+                  <p className="truncate text-zinc-200">{user.name}</p>
+                </div>
                 <div className="mt-2 flex gap-2">
                   <button
                     type="button"
                     disabled={isSubmitting}
                     onClick={() => handleRespondRequest(user.id, 'accept')}
-                    className="rounded bg-green-500 px-2 py-1 text-xs font-semibold text-black disabled:opacity-60"
+                    className="rounded-md bg-green-500 px-2 py-1 text-xs font-semibold text-black disabled:opacity-60"
                   >
                     Accept
                   </button>
@@ -282,7 +328,7 @@ function MessagesPage({ currentUser, accessToken, onOpenLogin = () => {} }) {
                     type="button"
                     disabled={isSubmitting}
                     onClick={() => handleRespondRequest(user.id, 'decline')}
-                    className="rounded bg-zinc-700 px-2 py-1 text-xs text-zinc-200 disabled:opacity-60"
+                    className="rounded-md bg-zinc-700 px-2 py-1 text-xs text-zinc-200 disabled:opacity-60"
                   >
                     Decline
                   </button>
@@ -292,9 +338,9 @@ function MessagesPage({ currentUser, accessToken, onOpenLogin = () => {} }) {
           </div>
         </div>
 
-        <div className="mt-4">
-          <h3 className="text-sm font-semibold text-zinc-200">Friends</h3>
-          <div className="mt-2 max-h-56 space-y-2 overflow-y-auto pr-1">
+        <div className="mt-5">
+          <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-300">Friends</h3>
+          <div className="mt-2 max-h-64 space-y-2 overflow-y-auto pr-1">
             {isLoadingSocial && <p className="text-xs text-zinc-500">Dang tai danh sach ban be...</p>}
             {!isLoadingSocial && friends.length === 0 && <p className="text-xs text-zinc-500">Chua co ban be nao.</p>}
             {friends.map((friend) => (
@@ -302,27 +348,54 @@ function MessagesPage({ currentUser, accessToken, onOpenLogin = () => {} }) {
                 key={friend.id}
                 type="button"
                 onClick={() => setSelectedFriendId(friend.id)}
-                className={`flex w-full items-center justify-between rounded-md px-2 py-2 text-left text-sm hover:bg-zinc-800 ${selectedFriendId === friend.id ? 'bg-green-500/20 text-green-200' : 'bg-zinc-900/70'}`}
+                className={`w-full rounded-lg border px-3 py-2 text-left transition ${selectedFriendId === friend.id ? 'border-green-400/40 bg-green-500/20 text-green-100' : 'border-white/10 bg-zinc-900/70 text-zinc-100 hover:bg-zinc-800'}`}
               >
-                <span className="truncate">{friend.name}</span>
-                {outgoingRequests.some((item) => item.id === friend.id) ? <span className="text-[11px] text-zinc-400">Pending</span> : null}
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-700 text-xs font-bold text-white">
+                    {getInitials(friend.name)}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{friend.name}</p>
+                    <p className="truncate text-[11px] text-zinc-400">{friend.email}</p>
+                  </div>
+                </div>
+                {outgoingRequests.some((item) => item.id === friend.id) ? <span className="mt-1 inline-flex rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-300">Pending</span> : null}
               </button>
             ))}
           </div>
         </div>
       </aside>
 
-      <article className="rounded-2xl border border-white/10 bg-zinc-950/70 p-4">
-        <div className="mb-3 border-b border-white/10 pb-3">
-          <h2 className="text-lg font-semibold">{selectedFriend ? `Chat with ${selectedFriend.name}` : 'Chon mot nguoi ban de bat dau chat'}</h2>
-          {selectedFriend ? <p className="text-xs text-zinc-400">{selectedFriend.email}</p> : null}
+      <article className="rounded-2xl border border-white/10 bg-linear-to-b from-[#111722] via-[#0d1119] to-[#0b0e15] p-4 shadow-xl shadow-black/30">
+        <div className="mb-4 flex items-center justify-between border-b border-white/10 pb-3">
+          <div className="flex min-w-0 items-center gap-3">
+            {selectedFriend ? (
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-500 text-sm font-bold text-black">
+                {getInitials(selectedFriend.name)}
+              </div>
+            ) : (
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-800 text-sm text-zinc-300">#</div>
+            )}
+            <div className="min-w-0">
+              <h2 className="truncate text-lg font-semibold text-white">
+                {selectedFriend ? selectedFriend.name : 'Select a friend to chat'}
+              </h2>
+              <p className="truncate text-xs text-zinc-400">{selectedFriend ? selectedFriend.email : 'Ban hay chon mot nguoi ben trai.'}</p>
+            </div>
+          </div>
+          <span className="hidden rounded-full bg-white/10 px-2 py-1 text-[10px] uppercase tracking-[0.15em] text-zinc-300 sm:inline-flex">Secure Chat</span>
         </div>
 
         {!selectedFriend ? (
-          <p className="text-sm text-zinc-500">Ban hay them ban tu cot ben trai de bat dau nhan tin.</p>
+          <div className="flex h-96 items-center justify-center rounded-xl border border-dashed border-white/15 bg-black/20 p-6 text-center">
+            <div>
+              <p className="text-base font-medium text-zinc-200">Khong co cuoc tro chuyen nao duoc chon</p>
+              <p className="mt-1 text-sm text-zinc-500">Them ban va chon mot nguoi de bat dau nhan tin.</p>
+            </div>
+          </div>
         ) : (
           <>
-            <div className="mb-4 h-90 space-y-2 overflow-y-auto rounded-lg bg-black/20 p-3">
+            <div ref={messagesViewportRef} className="mb-3 h-96 space-y-2 overflow-y-auto rounded-xl border border-white/10 bg-linear-to-b from-black/20 to-black/35 p-3">
               {isLoadingMessages && <p className="text-xs text-zinc-500">Dang tai tin nhan...</p>}
               {!isLoadingMessages && messages.length === 0 && (
                 <p className="text-xs text-zinc-500">Chua co tin nhan nao. Hay gui loi chao dau tien.</p>
@@ -332,10 +405,10 @@ function MessagesPage({ currentUser, accessToken, onOpenLogin = () => {} }) {
 
                 return (
                   <div key={message.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm ${isMine ? 'bg-green-500 text-black' : 'bg-zinc-800 text-zinc-100'}`}>
-                      <p className="wrap-break-word whitespace-pre-wrap">{message.text}</p>
-                      <p className={`mt-1 text-[11px] ${isMine ? 'text-black/70' : 'text-zinc-400'}`}>
-                        {new Date(message.createdAt).toLocaleString()}
+                    <div className={`max-w-[78%] rounded-2xl border px-3 py-2 text-sm shadow ${isMine ? 'border-green-400/20 bg-green-500 text-black' : 'border-white/10 bg-zinc-800/90 text-zinc-100'}`}>
+                      <p className="wrap-break-word whitespace-pre-wrap leading-relaxed">{message.text}</p>
+                      <p className={`mt-1 text-[10px] ${isMine ? 'text-black/70' : 'text-zinc-400'}`}>
+                        {formatMessageTime(message.createdAt)}
                       </p>
                     </div>
                   </div>
@@ -343,26 +416,28 @@ function MessagesPage({ currentUser, accessToken, onOpenLogin = () => {} }) {
               })}
             </div>
 
-            <form onSubmit={handleSendMessage} className="flex gap-2">
-              <input
-                value={messageDraft}
-                onChange={(event) => setMessageDraft(event.target.value)}
-                placeholder="Nhap tin nhan..."
-                className="w-full rounded-md bg-zinc-900 px-3 py-2 text-sm"
-              />
-              <button
-                type="submit"
-                disabled={isSubmitting || !messageDraft.trim()}
-                className="rounded-md bg-green-500 px-4 py-2 text-sm font-semibold text-black disabled:opacity-60"
-              >
-                Send
-              </button>
+            <form onSubmit={handleSendMessage} className="rounded-xl border border-white/10 bg-black/20 p-2">
+              <div className="flex items-end gap-2">
+                <input
+                  value={messageDraft}
+                  onChange={(event) => setMessageDraft(event.target.value)}
+                  placeholder="Nhap tin nhan..."
+                  className="w-full rounded-lg border border-white/10 bg-zinc-950/80 px-3 py-2.5 text-sm text-zinc-100 outline-none ring-green-500/40 transition focus:ring-2"
+                />
+                <button
+                  type="submit"
+                  disabled={isSubmitting || !messageDraft.trim()}
+                  className="rounded-lg bg-green-500 px-4 py-2.5 text-sm font-semibold text-black transition hover:bg-green-400 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  Send
+                </button>
+              </div>
             </form>
           </>
         )}
 
         {pageError ? (
-          <p className="mt-3 rounded-md bg-red-500/20 px-3 py-2 text-xs text-red-200">{pageError}</p>
+          <p className="mt-3 rounded-lg border border-red-500/40 bg-red-500/20 px-3 py-2 text-xs text-red-200">{pageError}</p>
         ) : null}
       </article>
     </section>
