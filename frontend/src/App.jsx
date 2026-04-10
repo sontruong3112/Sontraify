@@ -19,7 +19,6 @@ import PlaylistPage from './pages/PlaylistPage'
 import UserPage from './pages/UserPage'
 
 const LEFT_SIDEBAR_COLLAPSED_KEY = 'left_sidebar_collapsed'
-const LEFT_SIDEBAR_HOVER_FLYOUT_KEY = 'left_sidebar_hover_flyout'
 const SIDEBAR_AUTO_COLLAPSE_BREAKPOINT = 1500
 const TABLET_AUTO_COLLAPSE_BREAKPOINT = 1536
 const MOBILE_LAYOUT_BREAKPOINT = 1280
@@ -37,10 +36,6 @@ const Icon = ({ children, className = 'h-4 w-4' }) => (
 function App() {
   const [isLeftSidebarCollapsed, setIsLeftSidebarCollapsed] = useState(() => {
     return localStorage.getItem(LEFT_SIDEBAR_COLLAPSED_KEY) === '1'
-  })
-  const [isLeftSidebarHoverFlyoutEnabled, setIsLeftSidebarHoverFlyoutEnabled] = useState(() => {
-    const saved = localStorage.getItem(LEFT_SIDEBAR_HOVER_FLYOUT_KEY)
-    return saved == null ? true : saved === '1'
   })
   const [currentTrackId, setCurrentTrackId] = useState(getInitialTrackId)
   const [searchQuery, setSearchQuery] = useState('')
@@ -1001,14 +996,6 @@ function App() {
     })
   }
 
-  const handleToggleLeftSidebarHoverFlyout = () => {
-    setIsLeftSidebarHoverFlyoutEnabled((prev) => {
-      const next = !prev
-      localStorage.setItem(LEFT_SIDEBAR_HOVER_FLYOUT_KEY, next ? '1' : '0')
-      return next
-    })
-  }
-
   useEffect(() => {
     if (volume > 0) {
       lastNonZeroVolumeRef.current = volume
@@ -1295,7 +1282,6 @@ function App() {
           onOpenMessages={handleOpenMessages}
           isCollapsed={isLeftSidebarCollapsed}
           onToggleCollapse={handleToggleLeftSidebar}
-          hoverFlyoutEnabled={isLeftSidebarHoverFlyoutEnabled}
         />
       )}
 
@@ -1322,17 +1308,6 @@ function App() {
                 >
                   <Icon className="h-4 w-4"><path d="M4 4h6v16H4V4zm10 0h6v16h-6V4z"/></Icon>
                 </button>
-                <button
-                  type="button"
-                  onClick={handleToggleLeftSidebarHoverFlyout}
-                  className={`hidden rounded-full p-2 xl:block ${isLeftSidebarHoverFlyoutEnabled ? 'bg-green-500 text-black' : 'bg-black/40 text-zinc-300'}`}
-                  title={isLeftSidebarHoverFlyoutEnabled ? 'Tat tu mo rong khi hover' : 'Bat tu mo rong khi hover'}
-                >
-                  <Icon className="h-4 w-4"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm5.7 9h-2.44a7.7 7.7 0 00-.86-2.07l1.72-1.72A8.03 8.03 0 0117.7 11zM12 4a8 8 0 013.97 1.05l-1.73 1.73A7.7 7.7 0 0012 6.3V4zM6.04 5.05A8 8 0 0110 4v2.3a7.7 7.7 0 00-2.37.48L6.04 5.05zM4.3 11a8.03 8.03 0 011.58-3.77L7.6 8.95A7.7 7.7 0 006.74 11H4.3zm1.58 5.77A8.03 8.03 0 014.3 13h2.44c.15.73.45 1.42.86 2.05l-1.72 1.72zM10 19.7a8 8 0 01-3.96-1.04l1.72-1.72c.72.32 1.46.5 2.24.5v2.26zm4.25-1.02A7.95 7.95 0 0112 19.7v-2.26a7.7 7.7 0 002.25-.5l1.72 1.74zM16.12 16.77l-1.72-1.72c.41-.63.7-1.32.86-2.05h2.44a8.03 8.03 0 01-1.58 3.77z"/></Icon>
-                </button>
-                <span className={`type-badge hidden rounded-full px-2 py-1 xl:block ${isLeftSidebarHoverFlyoutEnabled ? 'bg-green-500/20 text-green-300' : 'bg-zinc-800 text-zinc-400'}`}>
-                  Hover Preview {isLeftSidebarHoverFlyoutEnabled ? 'On' : 'Off'}
-                </span>
                 <div className="flex min-w-0 items-center gap-2 rounded-full bg-[#2a2a2a] px-3 py-2 text-sm text-zinc-300">
                   <Icon className="h-4 w-4"><path d="M10 2a8 8 0 105.29 14l4.35 4.35 1.41-1.41-4.35-4.35A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z"/></Icon>
                   <input
