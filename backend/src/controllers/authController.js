@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import crypto from "node:crypto";
 import jwt from "jsonwebtoken";
 import { env } from "../config/env.js";
+import { Notification } from "../models/Notification.js";
 import { User } from "../models/User.js";
 import { fail, ok } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -128,6 +129,10 @@ const normalizeQueueIdList = (value, { maxLength = 200 } = {}) => {
   }
 
   return result;
+};
+
+const isValidRole = (value) => {
+  return ["user", "admin"].includes(String(value || "").trim());
 };
 
 const buildMusicPreferences = (user) => ({
@@ -669,5 +674,315 @@ export const applyPreferenceAction = asyncHandler(async (req, res) => {
     extra: {
       preferences: buildMusicPreferences(user),
     },
+  });
+});
+
+export const listUsersForAdmin = asyncHandler(async (_req, res) => {
+  const users = await User.find({})
+    .select("name email role avatarUrl createdAt updatedAt")
+    .sort({ createdAt: -1 });
+
+  const items = users.map((user) => ({
+    id: user._id.toString(),
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    avatarUrl: user.avatarUrl || "",
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+  }));
+
+  return ok(res, {
+    data: { users: items },
+    extra: { users: items },
+  });
+});
+
+export const updateUserByAdmin = asyncHandler(async (req, res) => {
+  const targetUserId = String(req.params.userId || "").trim();
+
+  const targetUser = await User.findById(targetUserId);
+  if (!targetUser) {
+    return fail(res, {
+      statusCode: 404,
+      message: "User not found",
+    });
+  }
+
+  const hasName = Object.prototype.hasOwnProperty.call(req.body, "name");
+  const hasRole = Object.prototype.hasOwnProperty.call(req.body, "role");
+  const hasAvatarUrl = Object.prototype.hasOwnProperty.call(req.body, "avatarUrl");
+
+  if (!hasName && !hasRole && !hasAvatarUrl) {
+    return fail(res, {
+      statusCode: 400,
+      message: "No user fields to update",
+    });
+  }
+
+  if (hasName) {
+    const nextName = String(req.body.name || "").trim();
+    if (!nextName) {
+      return fail(res, {
+        statusCode: 400,
+        message: "name cannot be empty",
+      });
+    }
+
+    targetUser.name = nextName;
+  }
+
+  if (hasAvatarUrl) {
+    targetUser.avatarUrl = String(req.body.avatarUrl || "").trim();
+  }
+
+  if (hasRole) {
+    const nextRole = String(req.body.role || "").trim();
+    if (!isValidRole(nextRole)) {
+      return fail(res, {
+        statusCode: 400,
+        message: "Invalid role",
+      });
+    }
+
+    if (req.user?.userId === targetUserId && nextRole !== "admin") {
+      return fail(res, {
+        statusCode: 400,
+        message: "Admin cannot remove own admin role",
+      });
+    }
+
+    targetUser.role = nextRole;
+  }
+
+  await targetUser.save();
+
+  return ok(res, {
+    message: "User updated",
+    data: {
+      user: {
+        id: targetUser._id.toString(),
+        name: targetUser.name,
+        email: targetUser.email,
+        role: targetUser.role,
+        avatarUrl: targetUser.avatarUrl || "",
+        createdAt: targetUser.createdAt,
+        updatedAt: targetUser.updatedAt,
+      },
+    },
+    extra: {
+      user: {
+        id: targetUser._id.toString(),
+        name: targetUser.name,
+        email: targetUser.email,
+        role: targetUser.role,
+        avatarUrl: targetUser.avatarUrl || "",
+        createdAt: targetUser.createdAt,
+        updatedAt: targetUser.updatedAt,
+      },
+    },
+  });
+});
+
+export const deleteUserByAdmin = asyncHandler(async (req, res) => {
+  const targetUserId = String(req.params.userId || "").trim();
+
+  if (!targetUserId) {
+    return fail(res, {
+      statusCode: 400,
+      message: "userId is required",
+    });
+  }
+
+  if (req.user?.userId === targetUserId) {
+    return fail(res, {
+      statusCode: 400,
+      message: "Admin cannot delete own account",
+    });
+  }
+
+  const deleted = await User.findByIdAndDelete(targetUserId);
+
+  if (!deleted) {
+    return fail(res, {
+      statusCode: 404,
+      message: "User not found",
+    });
+  }
+
+  return ok(res, {
+    message: "User deleted",
+  });
+});
+
+export const resetUserPasswordByAdmin = asyncHandler(async (req, res) => {
+  const targetUserId = String(req.params.userId || "").trim();
+  const newPassword = String(req.body?.newPassword || "").trim();
+
+  if (!newPassword || newPassword.length < 6) {
+    return fail(res, {
+      statusCode: 400,
+      message: "newPassword must be at least 6 characters",
+    });
+  }
+
+  const targetUser = await User.findById(targetUserId);
+  if (!targetUser) {
+    return fail(res, {
+      statusCode: 404,
+      message: "User not found",
+    });
+  }
+
+  targetUser.passwordHash = await bcrypt.hash(newPassword, 10);
+  targetUser.refreshTokenHash = null;
+  await targetUser.save();
+
+  return ok(res, {
+    message: "User password has been reset",
+  });
+});
+
+export const sendNotificationByAdmin = asyncHandler(async (req, res) => {
+  const title = String(req.body?.title || "").trim();
+  const message = String(req.body?.message || "").trim();
+  const recipientUserId = String(req.body?.recipientUserId || "").trim();
+  const sendToAll = req.body?.sendToAll === true;
+
+  if (!title || !message) {
+    return fail(res, {
+      statusCode: 400,
+      message: "title and message are required",
+    });
+  }
+
+  if (!sendToAll && !recipientUserId) {
+    return fail(res, {
+      statusCode: 400,
+      message: "recipientUserId is required when sendToAll=false",
+    });
+  }
+
+  const adminUserId = String(req.user?.userId || "").trim();
+  let recipientIds = [];
+
+  if (sendToAll) {
+    const users = await User.find({}).select("_id");
+    recipientIds = users.map((item) => item._id.toString());
+  } else {
+    const targetUser = await User.findById(recipientUserId).select("_id");
+    if (!targetUser) {
+      return fail(res, {
+        statusCode: 404,
+        message: "Recipient user not found",
+      });
+    }
+    recipientIds = [targetUser._id.toString()];
+  }
+
+  if (recipientIds.length === 0) {
+    return fail(res, {
+      statusCode: 400,
+      message: "No recipients found",
+    });
+  }
+
+  const payload = recipientIds.map((recipientId) => ({
+    recipientId,
+    createdByUserId: adminUserId,
+    title,
+    message,
+  }));
+
+  await Notification.insertMany(payload, { ordered: false });
+
+  return ok(res, {
+    statusCode: 201,
+    message: "Notification sent",
+    data: {
+      count: payload.length,
+    },
+    extra: {
+      count: payload.length,
+    },
+  });
+});
+
+export const listMyNotifications = asyncHandler(async (req, res) => {
+  const userId = String(req.user?.userId || "").trim();
+  const limit = Math.max(1, Math.min(200, Number(req.query.limit) || 30));
+
+  const notifications = await Notification.find({ recipientId: userId })
+    .sort({ createdAt: -1 })
+    .limit(limit)
+    .lean();
+
+  const unreadCount = await Notification.countDocuments({
+    recipientId: userId,
+    isRead: false,
+  });
+
+  const items = notifications.map((item) => ({
+    id: item._id.toString(),
+    title: item.title,
+    message: item.message,
+    isRead: Boolean(item.isRead),
+    createdAt: item.createdAt,
+    createdByUserId: item.createdByUserId?.toString() || "",
+  }));
+
+  return ok(res, {
+    data: {
+      notifications: items,
+      unreadCount,
+    },
+    extra: {
+      notifications: items,
+      unreadCount,
+    },
+  });
+});
+
+export const markNotificationRead = asyncHandler(async (req, res) => {
+  const notificationId = String(req.params.notificationId || "").trim();
+  const userId = String(req.user?.userId || "").trim();
+
+  const notification = await Notification.findOne({
+    _id: notificationId,
+    recipientId: userId,
+  });
+
+  if (!notification) {
+    return fail(res, {
+      statusCode: 404,
+      message: "Notification not found",
+    });
+  }
+
+  if (!notification.isRead) {
+    notification.isRead = true;
+    await notification.save();
+  }
+
+  return ok(res, {
+    message: "Notification marked as read",
+  });
+});
+
+export const markAllNotificationsRead = asyncHandler(async (req, res) => {
+  const userId = String(req.user?.userId || "").trim();
+
+  await Notification.updateMany(
+    {
+      recipientId: userId,
+      isRead: false,
+    },
+    {
+      $set: { isRead: true },
+    }
+  );
+
+  return ok(res, {
+    message: "All notifications marked as read",
   });
 });

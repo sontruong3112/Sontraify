@@ -18,6 +18,18 @@ function AdminPage({
   songs,
   handleEditSong,
   handleDeleteSong,
+  adminUsers = [],
+  adminUsersLoading = false,
+  adminUsersError = '',
+  onRefreshAdminUsers = () => {},
+  onChangeUserRole = () => {},
+  onDeleteUser = () => {},
+  onResetUserPassword = () => {},
+  notificationForm = { title: '', message: '', targetUserId: '', sendToAll: false },
+  onNotificationFormChange = () => {},
+  onSendNotification = () => {},
+  sendingNotification = false,
+  currentUserId = '',
 }) {
   return (
     <div className="space-y-4">
@@ -105,6 +117,129 @@ function AdminPage({
               ))}
             </tbody>
           </table>
+        </div>
+      </section>
+
+      <section className="rounded-lg bg-[#181818] p-3">
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <h2 className="text-lg font-semibold">Quan ly nguoi dung</h2>
+          <button
+            type="button"
+            onClick={onRefreshAdminUsers}
+            className="type-button-sm rounded-md bg-zinc-800 px-3 py-2 hover:bg-zinc-700"
+          >
+            Refresh
+          </button>
+        </div>
+
+        {adminUsersLoading ? <p className="text-sm text-zinc-400">Dang tai danh sach user...</p> : null}
+        {adminUsersError ? <p className="mb-2 rounded-md bg-red-500/20 px-3 py-2 text-sm text-red-200">{adminUsersError}</p> : null}
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="type-table-head text-zinc-500">
+              <tr>
+                <th className="pb-2">Name</th>
+                <th className="pb-2">Email</th>
+                <th className="pb-2">Role</th>
+                <th className="pb-2">Created</th>
+                <th className="pb-2 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {adminUsers.map((user) => {
+                const isSelf = user.id === currentUserId
+
+                return (
+                  <tr key={user.id} className="border-t border-white/6">
+                    <td className="py-2">{user.name}</td>
+                    <td className="py-2 text-zinc-400">{user.email}</td>
+                    <td className="py-2">
+                      <select
+                        value={user.role}
+                        onChange={(event) => onChangeUserRole(user.id, event.target.value)}
+                        disabled={isSelf}
+                        className="rounded bg-zinc-900 px-2 py-1 text-xs"
+                      >
+                        <option value="user">user</option>
+                        <option value="admin">admin</option>
+                      </select>
+                    </td>
+                    <td className="py-2 text-zinc-400">{new Date(user.createdAt).toLocaleString()}</td>
+                    <td className="py-2 text-right">
+                      <button
+                        type="button"
+                        onClick={() => onResetUserPassword(user.id)}
+                        disabled={isSelf}
+                        className="type-button-sm mr-2 rounded bg-amber-500/20 px-2 py-1 text-amber-200 disabled:opacity-40"
+                      >
+                        Reset Password
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onDeleteUser(user.id)}
+                        disabled={isSelf}
+                        className="type-button-sm rounded bg-red-500/20 px-2 py-1 text-red-200 disabled:opacity-40"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="rounded-lg bg-[#181818] p-3">
+        <h2 className="mb-3 text-lg font-semibold">Gui thong bao</h2>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <input
+            name="title"
+            value={notificationForm.title}
+            onChange={onNotificationFormChange}
+            placeholder="Tieu de thong bao"
+            className="rounded-md bg-zinc-900 px-3 py-2 text-sm"
+          />
+          <select
+            name="targetUserId"
+            value={notificationForm.targetUserId}
+            onChange={onNotificationFormChange}
+            disabled={notificationForm.sendToAll}
+            className="rounded-md bg-zinc-900 px-3 py-2 text-sm"
+          >
+            <option value="">Chon nguoi dung cu the</option>
+            {adminUsers.map((user) => (
+              <option key={`notify-${user.id}`} value={user.id}>{user.name} - {user.email}</option>
+            ))}
+          </select>
+          <textarea
+            name="message"
+            value={notificationForm.message}
+            onChange={onNotificationFormChange}
+            placeholder="Noi dung thong bao"
+            className="sm:col-span-2 min-h-24 rounded-md bg-zinc-900 px-3 py-2 text-sm"
+          />
+          <label className="sm:col-span-2 inline-flex items-center gap-2 text-sm text-zinc-300">
+            <input
+              type="checkbox"
+              name="sendToAll"
+              checked={notificationForm.sendToAll}
+              onChange={onNotificationFormChange}
+            />
+            Gui cho tat ca nguoi dung
+          </label>
+          <div className="sm:col-span-2">
+            <button
+              type="button"
+              onClick={onSendNotification}
+              disabled={sendingNotification}
+              className="type-button-sm rounded-md bg-blue-500 px-4 py-2 text-black disabled:opacity-70"
+            >
+              {sendingNotification ? 'Dang gui...' : 'Gui thong bao'}
+            </button>
+          </div>
         </div>
       </section>
     </div>

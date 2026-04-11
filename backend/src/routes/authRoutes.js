@@ -4,15 +4,23 @@ import {
 	googleLogin,
 	getMe,
 	getPreferences,
+	listUsersForAdmin,
 	loginAdmin,
 	login,
 	logout,
 	refreshAccessToken,
 	register,
+	deleteUserByAdmin,
+	listMyNotifications,
+	updateUserByAdmin,
+	markAllNotificationsRead,
+	markNotificationRead,
+	resetUserPasswordByAdmin,
+	sendNotificationByAdmin,
 	updateMe,
 	updatePreferences,
 } from "../controllers/authController.js";
-import { requireAuth } from "../middlewares/authMiddleware.js";
+import { requireAuth, requireRole } from "../middlewares/authMiddleware.js";
 import { validateRequest } from "../middlewares/validateRequest.js";
 import {
 	loginValidator,
@@ -42,5 +50,23 @@ router.post(
 	validateRequest,
 	applyPreferenceAction
 );
+router.get("/admin/users", requireAuth, requireRole("admin"), listUsersForAdmin);
+router.patch("/admin/users/:userId", requireAuth, requireRole("admin"), updateUserByAdmin);
+router.delete("/admin/users/:userId", requireAuth, requireRole("admin"), deleteUserByAdmin);
+router.post(
+	"/admin/users/:userId/reset-password",
+	requireAuth,
+	requireRole("admin"),
+	resetUserPasswordByAdmin
+);
+router.post(
+	"/admin/notifications",
+	requireAuth,
+	requireRole("admin"),
+	sendNotificationByAdmin
+);
+router.get("/notifications", requireAuth, listMyNotifications);
+router.post("/notifications/read-all", requireAuth, markAllNotificationsRead);
+router.post("/notifications/:notificationId/read", requireAuth, markNotificationRead);
 
 export default router;

@@ -68,6 +68,21 @@ function App() {
   const [syncPendingCount, setSyncPendingCount] = useState(0)
   const [syncStatus, setSyncStatus] = useState('idle')
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false)
+  const [notifications, setNotifications] = useState([])
+  const [notificationsLoading, setNotificationsLoading] = useState(false)
+  const [notificationError, setNotificationError] = useState('')
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0)
+  const [adminUsers, setAdminUsers] = useState([])
+  const [adminUsersLoading, setAdminUsersLoading] = useState(false)
+  const [adminUsersError, setAdminUsersError] = useState('')
+  const [notificationForm, setNotificationForm] = useState({
+    title: '',
+    message: '',
+    targetUserId: '',
+    sendToAll: false,
+  })
+  const [sendingNotification, setSendingNotification] = useState(false)
   const [isOnline, setIsOnline] = useState(() => {
     if (typeof navigator === 'undefined') {
       return true
@@ -79,6 +94,7 @@ function App() {
   const coverFileInputRef = useRef(null)
   const searchInputRef = useRef(null)
   const userMenuRef = useRef(null)
+  const notificationMenuRef = useRef(null)
   const location = useLocation()
   const navigate = useNavigate()
   const loginRedirectPathRef = useRef('/')
@@ -352,6 +368,206 @@ function App() {
     navigate(loginRedirectPathRef.current || '/', { replace: true })
   }, [isLoginRoute, sessionLoading, currentUser, navigate])
 
+  const loadAdminUsers = async () => {
+    if (!accessToken || !isAdmin) {
+      setAdminUsers([])
+      return
+    }
+
+    try {
+      setAdminUsersLoading(true)
+      setAdminUsersError('')
+      const data = await authApi.adminListUsers(accessToken)
+      setAdminUsers(Array.isArray(data?.users) ? data.users : [])
+    } catch (error) {
+      setAdminUsersError(error?.message || 'Khong the tai danh sach user')
+    } finally {
+      setAdminUsersLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!isAdminRoute || !isAdmin || !accessToken) {
+      return
+    }
+
+    loadAdminUsers()
+  }, [isAdminRoute, isAdmin, accessToken])
+
+  const handleChangeUserRole = async (userId, nextRole) => {
+    if (!accessToken || !userId || !nextRole) {
+      return
+    }
+
+    const previous = [...adminUsers]
+    setAdminUsers((prev) => prev.map((item) => (item.id === userId ? { ...item, role: nextRole } : item)))
+
+    try {
+      setAdminUsersError('')
+      await authApi.adminUpdateUser(accessToken, userId, { role: nextRole })
+    } catch (error) {
+      setAdminUsers(previous)
+      setAdminUsersError(error?.message || 'Khong the cap nhat role user')
+    }
+  }
+
+  const handleDeleteUserByAdmin = async (userId) => {
+    if (!accessToken || !userId) {
+      return
+    }
+
+    const shouldDelete = window.confirm('Ban co chac chan muon xoa user nay?')
+    if (!shouldDelete) {
+      return
+    }
+
+    const previous = [...adminUsers]
+    setAdminUsers((prev) => prev.filter((item) => item.id !== userId))
+
+    try {
+      setAdminUsersError('')
+      await authApi.adminDeleteUser(accessToken, userId)
+    } catch (error) {
+      setAdminUsers(previous)
+      setAdminUsersError(error?.message || 'Khong the xoa user')
+    }
+  }
+
+  const handleResetUserPasswordByAdmin = async (userId) => {
+    if (!accessToken || !userId) {
+      return
+    }
+
+    const newPassword = window.prompt('Nhap mat khau moi cho user (toi thieu 6 ky tu):', '')
+    if (!newPassword) {
+      return
+    }
+
+    try {
+      setAdminUsersError('')
+      await authApi.adminResetUserPassword(accessToken, userId, { newPassword })
+      window.alert('Reset password thanh cong')
+    } catch (error) {
+      setAdminUsersError(error?.message || 'Khong the reset mat khau user')
+    }
+  }
+
+  const handleNotificationFormChange = (event) => {
+    const { name, value, type, checked } = event.target
+    setNotificationForm((prev) => {
+      const next = {
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value,
+      }
+
+      if (name === 'sendToAll' && checked) {
+        next.targetUserId = ''
+      }
+
+      return next
+    })
+  }
+
+  const handleSendAdminNotification = async () => {
+    if (!accessToken || !isAdmin) {
+      return
+    }
+
+    const payload = {
+      title: notificationForm.title.trim(),
+      message: notificationForm.message.trim(),
+      recipientUserId: notificationForm.targetUserId,
+      sendToAll: notificationForm.sendToAll,
+    }
+
+    if (!payload.title || !payload.message) {
+      setAdminUsersError('Vui long nhap tieu de va noi dung thong bao')
+      return
+    }
+
+    if (!payload.sendToAll && !payload.recipientUserId) {
+      setAdminUsersError('Vui long chon user nhan thong bao hoac gui tat ca')
+      return
+    }
+
+    try {
+      setSendingNotification(true)
+      setAdminUsersError('')
+      await authApi.adminSendNotification(accessToken, payload)
+      setNotificationForm({ title: '', message: '', targetUserId: '', sendToAll: false })
+      window.alert('Gui thong bao thanh cong')
+    } catch (error) {
+      setAdminUsersError(error?.message || 'Khong the gui thong bao')
+    } finally {
+      setSendingNotification(false)
+    }
+  }
+
+  const loadNotifications = async ({ silent = false } = {}) => {
+    if (!accessToken || !currentUser) {
+      setNotifications([])
+      setUnreadNotificationsCount(0)
+      return
+    }
+
+    try {
+      if (!silent) {
+        setNotificationsLoading(true)
+      }
+
+      setNotificationError('')
+      const data = await authApi.listNotifications(accessToken)
+      setNotifications(Array.isArray(data?.notifications) ? data.notifications : [])
+      setUnreadNotificationsCount(Number(data?.unreadCount) || 0)
+    } catch (error) {
+      setNotificationError(error?.message || 'Khong the tai thong bao')
+    } finally {
+      if (!silent) {
+        setNotificationsLoading(false)
+      }
+    }
+  }
+
+  const handleOpenNotifications = async () => {
+    setIsNotificationOpen((prev) => !prev)
+
+    if (!isNotificationOpen) {
+      await loadNotifications()
+    }
+  }
+
+  const handleReadNotification = async (notificationId, isRead) => {
+    if (!accessToken || !notificationId || isRead) {
+      return
+    }
+
+    setNotifications((prev) => prev.map((item) => (
+      item.id === notificationId ? { ...item, isRead: true } : item
+    )))
+    setUnreadNotificationsCount((prev) => Math.max(0, prev - 1))
+
+    try {
+      await authApi.markNotificationRead(accessToken, notificationId)
+    } catch {
+      loadNotifications({ silent: true })
+    }
+  }
+
+  const handleMarkAllNotificationsRead = async () => {
+    if (!accessToken) {
+      return
+    }
+
+    setNotifications((prev) => prev.map((item) => ({ ...item, isRead: true })))
+    setUnreadNotificationsCount(0)
+
+    try {
+      await authApi.markAllNotificationsRead(accessToken)
+    } catch {
+      loadNotifications({ silent: true })
+    }
+  }
+
   useEffect(() => {
     if (sessionLoading || isLoginRoute || currentUser || (!isPlaylistRoute && !isAccountRoute && !isMessagesRoute)) {
       return
@@ -372,11 +588,15 @@ function App() {
     }
 
     const handlePointerDown = (event) => {
-      if (!userMenuRef.current || userMenuRef.current.contains(event.target)) {
+      const clickedInsideUserMenu = userMenuRef.current && userMenuRef.current.contains(event.target)
+      const clickedInsideNotification = notificationMenuRef.current && notificationMenuRef.current.contains(event.target)
+
+      if (clickedInsideUserMenu || clickedInsideNotification) {
         return
       }
 
       setIsUserMenuOpen(false)
+      setIsNotificationOpen(false)
     }
 
     window.addEventListener('pointerdown', handlePointerDown)
@@ -384,11 +604,28 @@ function App() {
     return () => {
       window.removeEventListener('pointerdown', handlePointerDown)
     }
-  }, [isUserMenuOpen])
+  }, [isUserMenuOpen, isNotificationOpen])
 
   useEffect(() => {
     setIsUserMenuOpen(false)
+    setIsNotificationOpen(false)
   }, [location.pathname])
+
+  useEffect(() => {
+    if (!currentUser || !accessToken) {
+      return
+    }
+
+    loadNotifications({ silent: true })
+
+    const intervalId = window.setInterval(() => {
+      loadNotifications({ silent: true })
+    }, 20000)
+
+    return () => {
+      window.clearInterval(intervalId)
+    }
+  }, [currentUser?.id, accessToken])
 
   const routeArtistName = useMemo(() => {
     if (!isArtistRoute) {
@@ -1416,6 +1653,7 @@ function App() {
           selectedPlaylistId={selectedPlaylistId}
           onSelectPlaylist={handleOpenPlaylistPage}
           likedSongsCount={likedSongs.length}
+          likedSongs={likedSongs}
           handleDeletePlaylist={handleDeletePlaylistWithAuth}
           artists={artists}
           playTrackById={playTrackById}
@@ -1498,6 +1736,58 @@ function App() {
                 ) : (
                   <>
                     <button type="button" className="type-button-sm rounded-full bg-zinc-800 px-3 py-2">Install App</button>
+                    <div className="relative" ref={notificationMenuRef}>
+                      <button
+                        type="button"
+                        onClick={handleOpenNotifications}
+                        className="relative rounded-full bg-zinc-800 p-2 text-zinc-200 hover:bg-zinc-700"
+                        title="Thong bao"
+                      >
+                        <Icon className="h-4 w-4"><path d="M12 2a6 6 0 00-6 6v3.6c0 .8-.26 1.58-.74 2.22L4 16h16l-1.26-2.18a4.4 4.4 0 01-.74-2.22V8a6 6 0 00-6-6zm0 20a2.5 2.5 0 002.45-2h-4.9A2.5 2.5 0 0012 22z"/></Icon>
+                        {unreadNotificationsCount > 0 && (
+                          <span className="type-badge absolute -right-1 -top-1 rounded-full bg-red-500 px-1 text-[10px] text-white">
+                            {unreadNotificationsCount > 99 ? '99+' : unreadNotificationsCount}
+                          </span>
+                        )}
+                      </button>
+
+                      {isNotificationOpen && (
+                        <div className="absolute right-0 mt-2 w-96 rounded-xl border border-white/10 bg-zinc-900 p-2 shadow-2xl shadow-black/60">
+                          <div className="mb-2 flex items-center justify-between px-2 pt-1">
+                            <p className="text-base font-semibold text-white">Thong bao</p>
+                            <button
+                              type="button"
+                              onClick={handleMarkAllNotificationsRead}
+                              className="type-button-sm rounded-md px-2 py-1 text-xs text-zinc-300 hover:bg-white/10"
+                            >
+                              Danh dau da doc
+                            </button>
+                          </div>
+
+                          {notificationsLoading ? <p className="px-2 py-2 text-sm text-zinc-400">Dang tai thong bao...</p> : null}
+                          {notificationError ? <p className="mx-2 mb-2 rounded bg-red-500/20 px-2 py-1 text-xs text-red-200">{notificationError}</p> : null}
+
+                          {!notificationsLoading && notifications.length === 0 ? (
+                            <p className="px-2 py-2 text-sm text-zinc-500">Chua co thong bao nao.</p>
+                          ) : null}
+
+                          <div className="max-h-80 space-y-1 overflow-y-auto pr-1">
+                            {notifications.map((item) => (
+                              <button
+                                key={item.id}
+                                type="button"
+                                onClick={() => handleReadNotification(item.id, item.isRead)}
+                                className={`w-full rounded-md px-2 py-2 text-left ${item.isRead ? 'bg-zinc-800/40' : 'bg-blue-500/15'}`}
+                              >
+                                <p className="truncate text-sm font-semibold text-white">{item.title}</p>
+                                <p className="mt-1 text-xs text-zinc-300">{item.message}</p>
+                                <p className="mt-1 text-[11px] text-zinc-500">{new Date(item.createdAt).toLocaleString()}</p>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                     <div className="relative" ref={userMenuRef}>
                       <button
                         type="button"
@@ -1585,6 +1875,18 @@ function App() {
                   songs={songs}
                   handleEditSong={handleEditSong}
                   handleDeleteSong={handleDeleteSong}
+                  adminUsers={adminUsers}
+                  adminUsersLoading={adminUsersLoading}
+                  adminUsersError={adminUsersError}
+                  onRefreshAdminUsers={loadAdminUsers}
+                  onChangeUserRole={handleChangeUserRole}
+                  onDeleteUser={handleDeleteUserByAdmin}
+                  onResetUserPassword={handleResetUserPasswordByAdmin}
+                  notificationForm={notificationForm}
+                  onNotificationFormChange={handleNotificationFormChange}
+                  onSendNotification={handleSendAdminNotification}
+                  sendingNotification={sendingNotification}
+                  currentUserId={currentUser?.id || ''}
                 />
               </ProtectedAdminRoute>
             ) : isArtistRoute ? (

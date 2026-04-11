@@ -19,6 +19,7 @@ function LeftSidebar({
   onResizeStart = () => {},
   hoverFlyoutEnabled = true,
   likedSongsCount = 0,
+  likedSongs = [],
   onOpenMessages = () => {},
 }) {
   const [isHoverExpanded, setIsHoverExpanded] = useState(false)
@@ -191,38 +192,96 @@ function LeftSidebar({
               </form>
             )}
 
-            <div className="mb-3 max-h-52 space-y-2 overflow-y-auto pr-1">
-              <div className="rounded-md bg-linear-to-r from-indigo-500/30 to-sky-500/20 px-2 py-2">
-                <p className="type-kicker truncate text-zinc-200">Liked Songs</p>
-                <p className="text-[11px] text-zinc-300">{likedSongsCount} bài hát da thich</p>
-              </div>
-
-              {playlistLoading && <p className="text-xs text-zinc-500">Đang tải playlist...</p>}
-              {!playlistLoading && playlists.length === 0 && (
-                <p className="text-xs text-zinc-500">Chưa có playlist nào</p>
-              )}
-              {playlists.map((playlist) => (
-                <div key={playlist._id} className="rounded-md bg-zinc-900/60 px-2 py-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <button
-                      type="button"
-                      onClick={() => onSelectPlaylist(playlist._id)}
-                      className={`truncate text-left text-sm ${selectedPlaylistId === playlist._id ? 'text-green-300' : ''}`}
-                      title={playlist.name}
-                    >
-                      {playlist.name}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDeletePlaylist(playlist._id)}
-                      disabled={playlistActionLoadingId === `delete-${playlist._id}`}
-                      className="type-button-sm rounded bg-zinc-800 px-1.5 py-0.5 hover:bg-zinc-700"
-                    >
-                      Xóa
-                    </button>
-                  </div>
+            <div className="space-y-4">
+              <section>
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="type-kicker text-zinc-300">Playlists</p>
+                  <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-400">{playlists.length}</span>
                 </div>
-              ))}
+
+                <div className="max-h-44 space-y-2 overflow-y-auto pr-1">
+                  {playlistLoading && <p className="text-xs text-zinc-500">Đang tải playlist...</p>}
+                  {!playlistLoading && playlists.length === 0 && (
+                    <p className="text-xs text-zinc-500">Chưa có playlist nào</p>
+                  )}
+                  {playlists.map((playlist) => {
+                    const songCount = Array.isArray(playlist.songs) ? playlist.songs.length : 0
+                    const isSelected = selectedPlaylistId === playlist._id
+
+                    return (
+                      <div
+                        key={playlist._id}
+                        className={`rounded-xl px-2 py-2 transition-all ${isSelected ? 'bg-green-500/15 ring-1 ring-green-400/50' : 'bg-zinc-900/70 hover:bg-zinc-900'}`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => onSelectPlaylist(playlist._id)}
+                            className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                            title={playlist.name}
+                          >
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md bg-zinc-800 text-xs font-bold text-zinc-300">
+                              {playlist.coverUrl ? (
+                                <img src={playlist.coverUrl} alt={playlist.name} className="h-full w-full object-cover" />
+                              ) : 'PL'}
+                            </div>
+                            <div className="min-w-0">
+                              <p className={`truncate text-sm font-semibold ${isSelected ? 'text-green-300' : 'text-zinc-100'}`}>
+                                {playlist.name}
+                              </p>
+                              <p className="truncate text-[11px] text-zinc-400">{songCount} bài hát</p>
+                            </div>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDeletePlaylist(playlist._id)}
+                            disabled={playlistActionLoadingId === `delete-${playlist._id}`}
+                            className="type-button-sm rounded bg-zinc-800 px-1.5 py-0.5 hover:bg-zinc-700"
+                          >
+                            Xóa
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </section>
+
+              <section>
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="type-kicker text-zinc-300">Liked Songs</p>
+                  <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-400">{likedSongsCount}</span>
+                </div>
+
+                {likedSongs.length === 0 ? (
+                  <p className="rounded-md bg-zinc-900/60 px-2 py-2 text-xs text-zinc-500">Chưa có bài hát yêu thích</p>
+                ) : (
+                  <div className="max-h-44 space-y-2 overflow-y-auto pr-1">
+                    {likedSongs.slice(0, 8).map((song) => {
+                      const songLabel = song?.title || song?.artist || 'Unknown'
+
+                      return (
+                        <button
+                          type="button"
+                          key={`liked-${song._id}`}
+                          onClick={() => playTrackById(song._id)}
+                          className="flex w-full items-center gap-2 rounded-md bg-zinc-900/70 px-2 py-2 text-left hover:bg-zinc-800"
+                          title={songLabel}
+                        >
+                          <div className="h-9 w-9 shrink-0 overflow-hidden rounded bg-zinc-800">
+                            {song.coverUrl ? <img src={song.coverUrl} alt={song.title} className="h-full w-full object-cover" /> : null}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate text-xs font-semibold text-zinc-100">{song.title || 'Unknown title'}</p>
+                            <p className="truncate text-[11px] text-zinc-400">{song.artist || 'Unknown artist'}</p>
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </section>
             </div>
           </>
         ) : (
@@ -237,6 +296,10 @@ function LeftSidebar({
               </button>
             )}
           </div>
+        )}
+
+        {!effectiveCollapsed && (
+          <p className="type-kicker mb-2 text-zinc-400">Artist Radio</p>
         )}
 
         <div className={effectiveCollapsed ? 'space-y-3' : 'space-y-2'}>

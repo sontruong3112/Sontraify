@@ -280,6 +280,97 @@ export const authApi = {
       requiresAuth: true,
     });
   },
+
+  adminListUsers: (token) => {
+    return apiRequest({
+      endpoint: "/auth/admin/users",
+      token,
+      requiresAuth: true,
+    });
+  },
+
+  adminUpdateUser: (tokenOrUserId, userIdOrPayload, payloadMaybe) => {
+    const { token, id, payload } = resolveTokenIdPayload(
+      tokenOrUserId,
+      userIdOrPayload,
+      payloadMaybe
+    );
+
+    return apiRequest({
+      endpoint: `/auth/admin/users/${id}`,
+      method: "PATCH",
+      token,
+      body: payload,
+      requiresAuth: true,
+    });
+  },
+
+  adminDeleteUser: (tokenOrUserId, userIdMaybe) => {
+    const { token, id } = resolveTokenId(tokenOrUserId, userIdMaybe);
+
+    return apiRequest({
+      endpoint: `/auth/admin/users/${id}`,
+      method: "DELETE",
+      token,
+      requiresAuth: true,
+    });
+  },
+
+  adminResetUserPassword: (tokenOrUserId, userIdOrPayload, payloadMaybe) => {
+    const { token, id, payload } = resolveTokenIdPayload(
+      tokenOrUserId,
+      userIdOrPayload,
+      payloadMaybe
+    );
+
+    return apiRequest({
+      endpoint: `/auth/admin/users/${id}/reset-password`,
+      method: "POST",
+      token,
+      body: payload,
+      requiresAuth: true,
+    });
+  },
+
+  adminSendNotification: (tokenOrPayload, payloadMaybe) => {
+    const { token, payload } = resolveTokenPayload(tokenOrPayload, payloadMaybe);
+
+    return apiRequest({
+      endpoint: "/auth/admin/notifications",
+      method: "POST",
+      token,
+      body: payload,
+      requiresAuth: true,
+    });
+  },
+
+  listNotifications: (token) => {
+    return apiRequest({
+      endpoint: "/auth/notifications",
+      token,
+      requiresAuth: true,
+    });
+  },
+
+  markNotificationRead: (tokenOrNotificationId, notificationIdMaybe) => {
+    const { token, id } = resolveTokenId(tokenOrNotificationId, notificationIdMaybe);
+
+    return apiRequest({
+      endpoint: `/auth/notifications/${id}/read`,
+      method: "POST",
+      token,
+      requiresAuth: true,
+    });
+  },
+
+  markAllNotificationsRead: (token) => {
+    return apiRequest({
+      endpoint: "/auth/notifications/read-all",
+      method: "POST",
+      token,
+      requiresAuth: true,
+    });
+  },
 };
 
 export const playlistsApi = {
