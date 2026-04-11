@@ -152,6 +152,7 @@ function App() {
 
     return 360
   })
+  const [isSidebarResizing, setIsSidebarResizing] = useState(false)
   const [likedSongIds, setLikedSongIds] = useState([])
   const [recentTrackIds, setRecentTrackIds] = useState([])
   const [queuedTrackIds, setQueuedTrackIds] = useState([])
@@ -1572,24 +1573,40 @@ function App() {
     event.currentTarget?.setPointerCapture?.(event.pointerId)
     const startX = event.clientX
     const startWidth = leftSidebarWidth
+    let latestWidth = startWidth
+    let frameId = 0
     const previousCursor = document.body.style.cursor
     const previousUserSelect = document.body.style.userSelect
 
     document.body.style.cursor = 'col-resize'
     document.body.style.userSelect = 'none'
+    setIsSidebarResizing(true)
 
     const handlePointerMove = (moveEvent) => {
-      const next = clampLeftSidebarWidth(startWidth + (moveEvent.clientX - startX))
-      setLeftSidebarWidth(next)
-      localStorage.setItem(LEFT_SIDEBAR_WIDTH_KEY, String(next))
+      latestWidth = clampLeftSidebarWidth(startWidth + (moveEvent.clientX - startX))
+
+      if (frameId) {
+        return
+      }
+
+      frameId = window.requestAnimationFrame(() => {
+        setLeftSidebarWidth(latestWidth)
+        frameId = 0
+      })
     }
 
     const handlePointerUp = () => {
       window.removeEventListener('pointermove', handlePointerMove)
       window.removeEventListener('pointerup', handlePointerUp)
       window.removeEventListener('pointercancel', handlePointerUp)
+      if (frameId) {
+        window.cancelAnimationFrame(frameId)
+      }
+      setLeftSidebarWidth(latestWidth)
+      localStorage.setItem(LEFT_SIDEBAR_WIDTH_KEY, String(latestWidth))
       document.body.style.cursor = previousCursor
       document.body.style.userSelect = previousUserSelect
+      setIsSidebarResizing(false)
     }
 
     window.addEventListener('pointermove', handlePointerMove)
@@ -1606,24 +1623,40 @@ function App() {
     event.currentTarget?.setPointerCapture?.(event.pointerId)
     const startX = event.clientX
     const startWidth = rightSidebarWidth
+    let latestWidth = startWidth
+    let frameId = 0
     const previousCursor = document.body.style.cursor
     const previousUserSelect = document.body.style.userSelect
 
     document.body.style.cursor = 'col-resize'
     document.body.style.userSelect = 'none'
+    setIsSidebarResizing(true)
 
     const handlePointerMove = (moveEvent) => {
-      const next = clampRightSidebarWidth(startWidth - (moveEvent.clientX - startX))
-      setRightSidebarWidth(next)
-      localStorage.setItem(RIGHT_SIDEBAR_WIDTH_KEY, String(next))
+      latestWidth = clampRightSidebarWidth(startWidth - (moveEvent.clientX - startX))
+
+      if (frameId) {
+        return
+      }
+
+      frameId = window.requestAnimationFrame(() => {
+        setRightSidebarWidth(latestWidth)
+        frameId = 0
+      })
     }
 
     const handlePointerUp = () => {
       window.removeEventListener('pointermove', handlePointerMove)
       window.removeEventListener('pointerup', handlePointerUp)
       window.removeEventListener('pointercancel', handlePointerUp)
+      if (frameId) {
+        window.cancelAnimationFrame(frameId)
+      }
+      setRightSidebarWidth(latestWidth)
+      localStorage.setItem(RIGHT_SIDEBAR_WIDTH_KEY, String(latestWidth))
       document.body.style.cursor = previousCursor
       document.body.style.userSelect = previousUserSelect
+      setIsSidebarResizing(false)
     }
 
     window.addEventListener('pointermove', handlePointerMove)
@@ -2260,6 +2293,7 @@ function App() {
     <AppShell
       leftSidebarWidth={leftSidebarWidth}
       rightSidebarWidth={rightSidebarWidth}
+      isSidebarResizing={isSidebarResizing}
       isMobileSidebarOpen={isMobileSidebarOpen}
       onCloseMobileSidebar={() => setIsMobileSidebarOpen(false)}
       mobileBottomNav={(
@@ -2317,8 +2351,8 @@ function App() {
         <>
         <main className="rounded-lg bg-[#121212] p-2">
           <div className="rounded-lg bg-linear-to-b from-[#1a1f4d] via-[#121212] to-[#121212] p-4">
-            <div className="mb-5 flex flex-wrap items-center justify-between gap-2 sm:gap-3">
-              <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-2 sm:gap-3 xl:grid xl:grid-cols-[1fr_minmax(0,42rem)_1fr] xl:items-center">
+              <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3 xl:col-start-2 xl:col-end-3">
                 <button
                   type="button"
                   onClick={() => setIsMobileSidebarOpen(true)}
@@ -2327,7 +2361,7 @@ function App() {
                 >
                   <Icon className="h-4 w-4"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></Icon>
                 </button>
-                <div className="relative w-full max-w-xl" ref={searchMenuRef}>
+                <div className="relative w-full max-w-xl sm:max-w-2xl xl:max-w-[42rem] xl:mx-auto" ref={searchMenuRef}>
                   <div className="flex min-w-0 items-center gap-3 rounded-full bg-[#2a2a2a] px-4 py-3 text-zinc-300 ring-1 ring-white/10 transition focus-within:ring-2 focus-within:ring-emerald-400/70">
                     <Icon className="h-5 w-5"><path d="M10 2a8 8 0 105.29 14l4.35 4.35 1.41-1.41-4.35-4.35A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z"/></Icon>
                     <input
@@ -2393,7 +2427,7 @@ function App() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 xl:col-start-3 xl:justify-self-end">
                 {isAdmin && (
                   <button
                     type="button"

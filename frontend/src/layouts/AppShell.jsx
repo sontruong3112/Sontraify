@@ -8,6 +8,7 @@ function AppShell({
   footerNode,
   leftSidebarWidth = 320,
   rightSidebarWidth = 360,
+  isSidebarResizing = false,
   isMobileSidebarOpen = false,
   onCloseMobileSidebar = () => {},
   mobileBottomNav,
@@ -49,7 +50,7 @@ function AppShell({
   return (
     <div className="smooth-ui min-h-screen bg-black text-white">
       <div
-        className="grid min-h-screen grid-cols-1 gap-2 p-2 pb-24 transition-[grid-template-columns] duration-300 ease-in-out"
+        className={`grid min-h-screen grid-cols-1 gap-2 p-2 pb-24 transition-[grid-template-columns] ${isSidebarResizing ? 'duration-0' : 'duration-300'} ease-in-out`}
         style={desktopGridStyle}
       >
         <div className="hidden xl:block">
