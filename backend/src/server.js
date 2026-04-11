@@ -2,11 +2,13 @@ import app from "./app.js";
 import { createServer } from "node:http";
 import { connectDatabase } from "./config/db.js";
 import { env, validateEnv } from "./config/env.js";
+import { ensureBootstrapAdmin } from "./services/bootstrapAdmin.js";
 import { initRealtimeSocket } from "./services/realtimeSocket.js";
 
 const bootstrap = async () => {
   validateEnv();
   await connectDatabase();
+  await ensureBootstrapAdmin();
 
   const httpServer = createServer(app);
   initRealtimeSocket(httpServer);
