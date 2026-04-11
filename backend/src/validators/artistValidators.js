@@ -28,3 +28,8 @@ export const addSongToAlbumValidator = [
   param("albumId").isMongoId().withMessage("Invalid album id"),
   body("songId").isMongoId().withMessage("Invalid song id"),
 ];
+
+export const artistAlbumParamsValidator = [
+  ...artistIdValidator,
+  param("albumId").isMongoId().withMessage("Invalid album id"),
+];

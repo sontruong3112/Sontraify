@@ -8,6 +8,7 @@ const songSchema = new mongoose.Schema(
     audioUrl: { type: String, required: true, trim: true },
     coverUrl: { type: String, default: "", trim: true },
     duration: { type: Number, min: 0, default: 0 },
+    playCount: { type: Number, min: 0, default: 0 },
   },
   { timestamps: true }
 );

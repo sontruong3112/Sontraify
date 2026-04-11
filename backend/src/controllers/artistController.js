@@ -183,3 +183,32 @@ export const addSongToArtistAlbum = asyncHandler(async (req, res) => {
     artist: normalizeArtistPayload(artist),
   });
 });
+
+export const getArtistAlbumDetail = asyncHandler(async (req, res) => {
+  const { artistId, albumId } = req.params;
+
+  const artist = await Artist.findById(artistId).populate({
+    path: "albums.songIds",
+    select: "title artist coverUrl duration genre audioUrl createdAt",
+  });
+
+  if (!artist) {
+    return res.status(404).json({ message: "Artist not found" });
+  }
+
+  const album = artist.albums.id(albumId);
+  if (!album) {
+    return res.status(404).json({ message: "Album not found" });
+  }
+
+  return res.status(200).json({
+    artist: {
+      id: String(artist._id),
+      name: artist.name || "",
+      slug: artist.slug || "",
+      avatarUrl: artist.avatarUrl || "",
+      bannerUrl: artist.bannerUrl || "",
+    },
+    album: normalizeAlbumPayload(album),
+  });
+});

@@ -186,6 +186,13 @@ export const songsApi = {
       requiresAuth: true,
     });
   },
+
+  trackPlay: (id) => {
+    return apiRequest({
+      endpoint: `/songs/${id}/play`,
+      method: "POST",
+    });
+  },
 };
 
 export const authApi = {
@@ -544,6 +551,12 @@ export const artistsApi = {
       token,
       body: { songId },
       requiresAuth: true,
+    });
+  },
+
+  getAlbumDetail: (artistId, albumId) => {
+    return apiRequest({
+      endpoint: `/artists/${artistId}/albums/${albumId}`,
     });
   },
 };

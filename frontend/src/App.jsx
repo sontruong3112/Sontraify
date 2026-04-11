@@ -1,7 +1,7 @@
 ﻿import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { io } from 'socket.io-client'
-import { artistsApi, authApi, socialApi } from './api/client'
+import { artistsApi, authApi, socialApi, songsApi } from './api/client'
 import { getInitialTrackId, useAudioPlayer } from './hooks/useAudioPlayer'
 import { useAuthSession } from './hooks/useAuthSession'
 import { useSongsLibrary } from './hooks/useSongsLibrary'
@@ -12,6 +12,7 @@ import ProtectedAdminRoute from './components/ProtectedAdminRoute'
 import RightSidebar from './components/RightSidebar'
 import FooterPlayer from './components/FooterPlayer'
 import AdminPage from './pages/AdminPage'
+import AlbumPage from './pages/AlbumPage'
 import AccountPage from './pages/AccountPage'
 import ArtistPage from './pages/ArtistPage'
 import LoginPage from './pages/LoginPage'
@@ -125,6 +126,10 @@ function App() {
   const [artistLibraryError, setArtistLibraryError] = useState('')
   const [selectedArtistDetail, setSelectedArtistDetail] = useState(null)
   const [selectedArtistLoading, setSelectedArtistLoading] = useState(false)
+  const [selectedAlbumDetail, setSelectedAlbumDetail] = useState(null)
+  const [selectedAlbumLoading, setSelectedAlbumLoading] = useState(false)
+  const [trendingSongs, setTrendingSongs] = useState([])
+  const [trendingSongsLoading, setTrendingSongsLoading] = useState(false)
   const [adminArtistForm, setAdminArtistForm] = useState({
     name: '',
     bio: '',
@@ -175,6 +180,7 @@ function App() {
   const isHydratingPreferencesRef = useRef(false)
   const pendingPreferenceActionsRef = useRef([])
   const isFlushingPreferenceActionsRef = useRef(false)
+  const lastTrackedPlaySongIdRef = useRef('')
   const appSocketRef = useRef(null)
   const [isAppSocketConnected, setIsAppSocketConnected] = useState(false)
 
@@ -424,6 +430,7 @@ function App() {
   const isAdmin = currentUser?.role === 'admin'
   const isAdminRoute = location.pathname.startsWith('/admin')
   const isArtistRoute = location.pathname.startsWith('/artist/')
+  const isAlbumRoute = location.pathname.startsWith('/album/')
   const isPlaylistRoute = location.pathname.startsWith('/playlist/')
   const isAccountRoute = location.pathname === '/account'
   const isMessagesRoute = location.pathname === '/messages'
@@ -480,6 +487,23 @@ function App() {
     } finally {
       if (!silent) {
         setArtistLibraryLoading(false)
+      }
+    }
+  }
+
+  const loadTrendingSongs = async ({ silent = false } = {}) => {
+    try {
+      if (!silent) {
+        setTrendingSongsLoading(true)
+      }
+
+      const data = await songsApi.list({ page: 1, limit: 10, sort: 'trending' })
+      setTrendingSongs(Array.isArray(data?.items) ? data.items : [])
+    } catch {
+      setTrendingSongs([])
+    } finally {
+      if (!silent) {
+        setTrendingSongsLoading(false)
       }
     }
   }
@@ -611,6 +635,7 @@ function App() {
 
   useEffect(() => {
     loadArtistsLibrary()
+    loadTrendingSongs()
   }, [])
 
   const handleChangeUserRole = async (userId, nextRole) => {
@@ -1006,6 +1031,20 @@ function App() {
     }
   }, [isArtistRoute, location.pathname])
 
+  const routeAlbumParams = useMemo(() => {
+    if (!isAlbumRoute) {
+      return { artistId: '', albumId: '' }
+    }
+
+    const raw = location.pathname.replace('/album/', '')
+    const [artistId = '', albumId = ''] = raw.split('/')
+
+    return {
+      artistId: decodeURIComponent(artistId || ''),
+      albumId: decodeURIComponent(albumId || ''),
+    }
+  }, [isAlbumRoute, location.pathname])
+
   const routePlaylistId = useMemo(() => {
     if (!isPlaylistRoute) {
       return ''
@@ -1118,6 +1157,43 @@ function App() {
       disposed = true
     }
   }, [routeArtistIdOrSlug])
+
+  useEffect(() => {
+    if (!routeAlbumParams.artistId || !routeAlbumParams.albumId) {
+      setSelectedAlbumDetail(null)
+      return
+    }
+
+    let disposed = false
+
+    const loadAlbumDetail = async () => {
+      try {
+        setSelectedAlbumLoading(true)
+        const data = await artistsApi.getAlbumDetail(routeAlbumParams.artistId, routeAlbumParams.albumId)
+
+        if (!disposed) {
+          setSelectedAlbumDetail({
+            artist: data?.artist || null,
+            album: data?.album || null,
+          })
+        }
+      } catch {
+        if (!disposed) {
+          setSelectedAlbumDetail(null)
+        }
+      } finally {
+        if (!disposed) {
+          setSelectedAlbumLoading(false)
+        }
+      }
+    }
+
+    loadAlbumDetail()
+
+    return () => {
+      disposed = true
+    }
+  }, [routeAlbumParams.artistId, routeAlbumParams.albumId])
 
   const popularSongs = useMemo(() => {
     const section = filteredSongs.slice(5, 15)
@@ -1506,6 +1582,13 @@ function App() {
     })
 
     syncPreferenceAction({ action: 'recent_push', songId: currentTrackId })
+
+    if (lastTrackedPlaySongIdRef.current !== currentTrackId) {
+      lastTrackedPlaySongIdRef.current = currentTrackId
+      songsApi.trackPlay(currentTrackId)
+        .then(() => loadTrendingSongs({ silent: true }))
+        .catch(() => {})
+    }
   }, [currentTrackId])
 
   const toggleLikeSong = (songId) => {
@@ -1782,6 +1865,20 @@ function App() {
     setForcedPlaybackSongIds([])
     setSearchQuery('')
     showPlayerToast('Artist page opened')
+  }
+
+  const handleOpenAlbumPage = (artistId, albumId) => {
+    const normalizedArtistId = String(artistId || '').trim()
+    const normalizedAlbumId = String(albumId || '').trim()
+
+    if (!normalizedArtistId || !normalizedAlbumId) {
+      return
+    }
+
+    navigate(`/album/${encodeURIComponent(normalizedArtistId)}/${encodeURIComponent(normalizedAlbumId)}`)
+    setForcedPlaybackSongIds([])
+    setSearchQuery('')
+    showPlayerToast('Album page opened')
   }
 
   const handleOpenArtistRadio = (artistName) => {
@@ -2199,9 +2296,10 @@ function App() {
                     value={searchQuery}
                     onChange={(event) => {
                       setSearchQuery(event.target.value)
-                      if (activeArtist || isPlaylistRoute || isMessagesRoute) {
+                      if (activeArtist || isPlaylistRoute || isMessagesRoute || isAlbumRoute) {
                         navigate('/')
                         setActiveArtist('')
+                        setForcedPlaybackSongIds([])
                       }
                     }}
                   />
@@ -2461,6 +2559,7 @@ function App() {
                 playTrackById={playTrackById}
                 onPlayAlbumOnly={handlePlayAlbumOnly}
                 onPlaySongInAlbum={handlePlaySongInAlbum}
+                onOpenAlbumPage={handleOpenAlbumPage}
                 currentTrackId={currentTrackId}
                 isPlaying={isPlaying}
                 onToggleSongPlayback={handleToggleSongPlayback}
@@ -2469,6 +2568,26 @@ function App() {
                 isSongLiked={isSongLiked}
                 toggleLikeSong={toggleLikeSong}
                 onBackToHome={handleClearArtistRadio}
+              />
+            ) : isAlbumRoute ? (
+              <AlbumPage
+                artist={selectedAlbumDetail?.artist || null}
+                album={selectedAlbumDetail?.album || null}
+                albumLoading={selectedAlbumLoading}
+                currentTrackId={currentTrackId}
+                isPlaying={isPlaying}
+                onToggleSongPlayback={handleToggleSongPlayback}
+                onPlayAlbumOnly={handlePlayAlbumOnly}
+                onPlaySongInAlbum={handlePlaySongInAlbum}
+                onBack={() => {
+                  const targetArtistId = routeAlbumParams.artistId || selectedAlbumDetail?.artist?.id || ''
+                  if (targetArtistId) {
+                    navigate(`/artist/${encodeURIComponent(targetArtistId)}`)
+                    return
+                  }
+
+                  navigate('/')
+                }}
               />
             ) : isPlaylistRoute ? (
               <PlaylistPage
@@ -2511,21 +2630,15 @@ function App() {
                 setSelectedPlaylistBySong={setSelectedPlaylistBySong}
                 playlistActionLoadingId={playlistActionLoadingId}
                 handleAddSongToPlaylist={handleAddSongToPlaylistWithAuth}
-                selectedPlaylist={selectedPlaylist}
-                handleRemoveSongFromPlaylist={handleRemoveSongFromPlaylistWithAuth}
-                popularSongs={popularSongs}
-                likedSongs={likedSongs}
-                recentlyPlayedSongs={recentlyPlayedSongs}
+                trendingSongs={trendingSongs}
+                trendingSongsLoading={trendingSongsLoading}
                 isSongLiked={isSongLiked}
                 toggleLikeSong={toggleLikeSong}
                 addSongToQueueNext={addSongToQueueNext}
                 addSongToQueueLast={addSongToQueueLast}
-                onOpenArtistRadio={handleOpenArtistRadio}
                 onOpenArtistPage={handleOpenArtistPage}
-                onClearArtistRadio={handleClearArtistRadio}
                 artistLibrary={artistLibrary}
                 artistLibraryLoading={artistLibraryLoading}
-                onShowToast={showPlayerToast}
                 searchQuery={searchQuery}
               />
             )}

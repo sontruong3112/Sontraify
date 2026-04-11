@@ -8,6 +8,7 @@ export const listSongs = asyncHandler(async (req, res) => {
 
   const keyword = (req.query.q || "").trim();
   const genre = (req.query.genre || "").trim();
+  const sort = (req.query.sort || "latest").trim().toLowerCase();
 
   const query = {};
 
@@ -19,8 +20,12 @@ export const listSongs = asyncHandler(async (req, res) => {
     query.genre = genre;
   }
 
+  const sortQuery = sort === "trending"
+    ? { playCount: -1, createdAt: -1 }
+    : { createdAt: -1 };
+
   const [items, total] = await Promise.all([
-    Song.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
+    Song.find(query).sort(sortQuery).skip(skip).limit(limit),
     Song.countDocuments(query),
   ]);
 
@@ -78,4 +83,21 @@ export const deleteSong = asyncHandler(async (req, res) => {
   }
 
   return res.status(200).json({ message: "Song deleted" });
+});
+
+export const trackSongPlay = asyncHandler(async (req, res) => {
+  const song = await Song.findByIdAndUpdate(
+    req.params.id,
+    { $inc: { playCount: 1 } },
+    { new: true }
+  );
+
+  if (!song) {
+    return res.status(404).json({ message: "Song not found" });
+  }
+
+  return res.status(200).json({
+    message: "Play tracked",
+    item: song,
+  });
 });

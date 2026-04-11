@@ -4,6 +4,7 @@ import {
 	deleteSong,
 	getSongById,
 	listSongs,
+	trackSongPlay,
 	updateSong,
 } from "../controllers/songController.js";
 import { requireAuth, requireRole } from "../middlewares/authMiddleware.js";
@@ -19,6 +20,7 @@ const router = express.Router();
 
 router.get("/", songQueryValidator, validateRequest, listSongs);
 router.get("/:id", songIdParamValidator, validateRequest, getSongById);
+router.post("/:id/play", songIdParamValidator, validateRequest, trackSongPlay);
 router.post(
 	"/",
 	requireAuth,

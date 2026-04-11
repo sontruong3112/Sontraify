@@ -11,6 +11,7 @@ export const createSongValidator = [
 export const songQueryValidator = [
   query("page").optional().isInt({ min: 1 }).withMessage("page must be >= 1"),
   query("limit").optional().isInt({ min: 1, max: 100 }).withMessage("limit must be 1-100"),
+  query("sort").optional().isIn(["latest", "trending"]).withMessage("sort must be latest or trending"),
 ];
 
 export const songIdParamValidator = [

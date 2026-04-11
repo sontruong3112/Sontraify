@@ -3,6 +3,7 @@ import {
   addSongToArtistAlbum,
   createArtist,
   createArtistAlbum,
+  getArtistAlbumDetail,
   getArtistDetail,
   listArtists,
 } from "../controllers/artistController.js";
@@ -10,6 +11,7 @@ import { requireAuth, requireRole } from "../middlewares/authMiddleware.js";
 import { validateRequest } from "../middlewares/validateRequest.js";
 import {
   addSongToAlbumValidator,
+  artistAlbumParamsValidator,
   artistIdOrSlugValidator,
   createAlbumValidator,
   createArtistValidator,
@@ -19,6 +21,7 @@ const router = express.Router();
 
 router.get("/", listArtists);
 router.get("/:idOrSlug", artistIdOrSlugValidator, validateRequest, getArtistDetail);
+router.get("/:artistId/albums/:albumId", artistAlbumParamsValidator, validateRequest, getArtistAlbumDetail);
 
 router.post(
   "/",
