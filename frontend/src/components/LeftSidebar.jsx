@@ -102,7 +102,7 @@ function LeftSidebar({
             className={`flex items-center text-xl font-bold ${effectiveCollapsed ? 'justify-center' : 'gap-2'}`}
             title="Home"
           >
-            <Icon className="h-7 w-7 text-green-500"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm4.64 14.45a.76.76 0 01-1.04.25 9.7 9.7 0 00-5.03-1.31 9.8 9.8 0 00-3.38.62.75.75 0 11-.5-1.41 11.2 11.2 0 013.88-.7c2.04 0 4.05.52 5.78 1.5.36.2.49.67.29 1.05zm1.5-2.9a.94.94 0 01-1.3.3 12.5 12.5 0 00-6.3-1.66 12.7 12.7 0 00-4.22.73.94.94 0 11-.62-1.77 14.6 14.6 0 014.84-.83c2.52 0 4.99.65 7.23 1.88.45.24.61.82.37 1.35zm.12-3.03A15.3 15.3 0 0010.6 8.4c-1.83 0-3.63.3-5.31.91a1.12 1.12 0 11-.76-2.1A17.5 17.5 0 0110.6 6c3.24 0 6.43.85 9.23 2.46a1.12 1.12 0 11-1.13 1.96z"/></Icon>
+            <img src="/favicon.svg" alt="Sontraify logo" className="h-7 w-7 rounded-md" />
             <span className={`overflow-hidden whitespace-nowrap transition-all duration-300 ease-in-out ${textRevealClass}`}>
               Sontraify
             </span>
