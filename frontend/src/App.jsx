@@ -20,8 +20,6 @@ import MessagesPage from './pages/MessagesPage'
 import PlaylistPage from './pages/PlaylistPage'
 import UserPage from './pages/UserPage'
 
-const LEFT_SIDEBAR_COLLAPSED_KEY = 'left_sidebar_collapsed'
-const SIDEBAR_AUTO_COLLAPSE_BREAKPOINT = 1500
 const TABLET_AUTO_COLLAPSE_BREAKPOINT = 1536
 const MOBILE_LAYOUT_BREAKPOINT = 1280
 const GUEST_LIKED_SONGS_KEY = 'guest_liked_song_ids'
@@ -66,6 +64,66 @@ const sortMessagesByTime = (items) => {
   return [...items].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
 }
 
+const toSearchText = (value = '') => {
+  return String(value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+const isSubsequenceMatch = (query, target) => {
+  if (!query || !target) {
+    return false
+  }
+
+  let queryIndex = 0
+  for (let targetIndex = 0; targetIndex < target.length && queryIndex < query.length; targetIndex += 1) {
+    if (query[queryIndex] === target[targetIndex]) {
+      queryIndex += 1
+    }
+  }
+
+  return queryIndex === query.length
+}
+
+const getSongSearchScore = (song, keyword) => {
+  if (!keyword) {
+    return 1
+  }
+
+  const title = toSearchText(song?.title || '')
+  const artist = toSearchText(song?.artist || '')
+  const genre = toSearchText(song?.genre || '')
+  const joined = `${title} ${artist} ${genre}`.trim()
+
+  if (!joined) {
+    return 0
+  }
+
+  let score = 0
+  if (title.startsWith(keyword)) score += 180
+  if (artist.startsWith(keyword)) score += 160
+  if (title.includes(keyword)) score += 120
+  if (artist.includes(keyword)) score += 100
+  if (genre.includes(keyword)) score += 40
+
+  const tokens = keyword.split(' ').filter(Boolean)
+  tokens.forEach((token) => {
+    if (title.includes(token)) score += 24
+    if (artist.includes(token)) score += 20
+    if (genre.includes(token)) score += 8
+  })
+
+  if (isSubsequenceMatch(keyword.replace(/\s+/g, ''), joined.replace(/\s+/g, ''))) {
+    score += 30
+  }
+
+  return score
+}
+
 const Icon = ({ children, className = 'h-4 w-4' }) => (
   <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
     {children}
@@ -73,11 +131,9 @@ const Icon = ({ children, className = 'h-4 w-4' }) => (
 )
 
 function App() {
-  const [isLeftSidebarCollapsed, setIsLeftSidebarCollapsed] = useState(() => {
-    return localStorage.getItem(LEFT_SIDEBAR_COLLAPSED_KEY) === '1'
-  })
   const [currentTrackId, setCurrentTrackId] = useState(getInitialTrackId)
   const [searchQuery, setSearchQuery] = useState('')
+  const [isSearchMenuOpen, setIsSearchMenuOpen] = useState(false)
   const [activeArtist, setActiveArtist] = useState('')
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
   const [leftSidebarWidth, setLeftSidebarWidth] = useState(() => {
@@ -166,6 +222,7 @@ function App() {
   })
   const audioFileInputRef = useRef(null)
   const coverFileInputRef = useRef(null)
+  const searchMenuRef = useRef(null)
   const searchInputRef = useRef(null)
   const userMenuRef = useRef(null)
   const notificationMenuRef = useRef(null)
@@ -186,31 +243,6 @@ function App() {
 
   const clampLeftSidebarWidth = (value) => Math.min(460, Math.max(260, Math.round(value)))
   const clampRightSidebarWidth = (value) => Math.min(520, Math.max(280, Math.round(value)))
-
-  useEffect(() => {
-    const autoCollapseOnNarrowScreen = () => {
-      if (window.innerWidth < SIDEBAR_AUTO_COLLAPSE_BREAKPOINT) {
-        setIsLeftSidebarCollapsed(true)
-      }
-
-      if (window.innerWidth < TABLET_AUTO_COLLAPSE_BREAKPOINT) {
-        setIsLeftSidebarCollapsed(true)
-        return
-      }
-
-      const savedCollapsed = localStorage.getItem(LEFT_SIDEBAR_COLLAPSED_KEY)
-      if (savedCollapsed != null) {
-        setIsLeftSidebarCollapsed(savedCollapsed === '1')
-      }
-    }
-
-    autoCollapseOnNarrowScreen()
-    window.addEventListener('resize', autoCollapseOnNarrowScreen)
-
-    return () => {
-      window.removeEventListener('resize', autoCollapseOnNarrowScreen)
-    }
-  }, [])
 
   useEffect(() => {
     const closeDrawerOnDesktop = () => {
@@ -967,7 +999,7 @@ function App() {
   }, [sessionLoading, isLoginRoute, currentUser, isPlaylistRoute, isAccountRoute, isMessagesRoute, location.pathname, location.search, navigate, setAuthMode, setAuthError])
 
   useEffect(() => {
-    if (!isUserMenuOpen && !isNotificationOpen && !isChatListOpen) {
+    if (!isUserMenuOpen && !isNotificationOpen && !isChatListOpen && !isSearchMenuOpen) {
       return
     }
 
@@ -975,14 +1007,16 @@ function App() {
       const clickedInsideUserMenu = userMenuRef.current && userMenuRef.current.contains(event.target)
       const clickedInsideNotification = notificationMenuRef.current && notificationMenuRef.current.contains(event.target)
       const clickedInsideChatMenu = chatMenuRef.current && chatMenuRef.current.contains(event.target)
+      const clickedInsideSearch = searchMenuRef.current && searchMenuRef.current.contains(event.target)
 
-      if (clickedInsideUserMenu || clickedInsideNotification || clickedInsideChatMenu) {
+      if (clickedInsideUserMenu || clickedInsideNotification || clickedInsideChatMenu || clickedInsideSearch) {
         return
       }
 
       setIsUserMenuOpen(false)
       setIsNotificationOpen(false)
       setIsChatListOpen(false)
+      setIsSearchMenuOpen(false)
     }
 
     window.addEventListener('pointerdown', handlePointerDown)
@@ -990,12 +1024,13 @@ function App() {
     return () => {
       window.removeEventListener('pointerdown', handlePointerDown)
     }
-  }, [isUserMenuOpen, isNotificationOpen, isChatListOpen])
+  }, [isUserMenuOpen, isNotificationOpen, isChatListOpen, isSearchMenuOpen])
 
   useEffect(() => {
     setIsUserMenuOpen(false)
     setIsNotificationOpen(false)
     setIsChatListOpen(false)
+    setIsSearchMenuOpen(false)
   }, [location.pathname])
 
   useEffect(() => {
@@ -1108,19 +1143,29 @@ function App() {
   }, [songs])
 
   const filteredSongs = useMemo(() => {
-    const keyword = searchQuery.trim().toLowerCase()
+    const keyword = toSearchText(searchQuery)
 
     if (!keyword) {
       return songs
     }
 
-    return songs.filter((song) => {
-      const title = String(song.title || '').toLowerCase()
-      const artist = String(song.artist || '').toLowerCase()
-      const genre = String(song.genre || '').toLowerCase()
-      return title.includes(keyword) || artist.includes(keyword) || genre.includes(keyword)
-    })
+    return songs
+      .map((song) => ({
+        song,
+        score: getSongSearchScore(song, keyword),
+      }))
+      .filter((entry) => entry.score > 0)
+      .sort((a, b) => {
+        if (b.score !== a.score) {
+          return b.score - a.score
+        }
+
+        return String(a.song?.title || '').localeCompare(String(b.song?.title || ''))
+      })
+      .map((entry) => entry.song)
   }, [songs, searchQuery])
+
+  const searchSuggestions = useMemo(() => filteredSongs.slice(0, 8), [filteredSongs])
 
   const recommendedSongs = useMemo(() => filteredSongs.slice(0, 10), [filteredSongs])
 
@@ -1524,27 +1569,32 @@ function App() {
     }
 
     event.preventDefault()
+    event.currentTarget?.setPointerCapture?.(event.pointerId)
     const startX = event.clientX
-    const startWidth = isLeftSidebarCollapsed ? 320 : leftSidebarWidth
+    const startWidth = leftSidebarWidth
+    const previousCursor = document.body.style.cursor
+    const previousUserSelect = document.body.style.userSelect
+
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
 
     const handlePointerMove = (moveEvent) => {
       const next = clampLeftSidebarWidth(startWidth + (moveEvent.clientX - startX))
       setLeftSidebarWidth(next)
       localStorage.setItem(LEFT_SIDEBAR_WIDTH_KEY, String(next))
-
-      if (isLeftSidebarCollapsed) {
-        setIsLeftSidebarCollapsed(false)
-        localStorage.setItem(LEFT_SIDEBAR_COLLAPSED_KEY, '0')
-      }
     }
 
     const handlePointerUp = () => {
       window.removeEventListener('pointermove', handlePointerMove)
       window.removeEventListener('pointerup', handlePointerUp)
+      window.removeEventListener('pointercancel', handlePointerUp)
+      document.body.style.cursor = previousCursor
+      document.body.style.userSelect = previousUserSelect
     }
 
     window.addEventListener('pointermove', handlePointerMove)
     window.addEventListener('pointerup', handlePointerUp)
+    window.addEventListener('pointercancel', handlePointerUp)
   }
 
   const handleRightSidebarResizeStart = (event) => {
@@ -1553,8 +1603,14 @@ function App() {
     }
 
     event.preventDefault()
+    event.currentTarget?.setPointerCapture?.(event.pointerId)
     const startX = event.clientX
     const startWidth = rightSidebarWidth
+    const previousCursor = document.body.style.cursor
+    const previousUserSelect = document.body.style.userSelect
+
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
 
     const handlePointerMove = (moveEvent) => {
       const next = clampRightSidebarWidth(startWidth - (moveEvent.clientX - startX))
@@ -1565,10 +1621,14 @@ function App() {
     const handlePointerUp = () => {
       window.removeEventListener('pointermove', handlePointerMove)
       window.removeEventListener('pointerup', handlePointerUp)
+      window.removeEventListener('pointercancel', handlePointerUp)
+      document.body.style.cursor = previousCursor
+      document.body.style.userSelect = previousUserSelect
     }
 
     window.addEventListener('pointermove', handlePointerMove)
     window.addEventListener('pointerup', handlePointerUp)
+    window.addEventListener('pointercancel', handlePointerUp)
   }
 
   useEffect(() => {
@@ -1734,6 +1794,7 @@ function App() {
     setForcedPlaybackSongIds([])
     navigate('/')
     setSearchQuery('')
+    setIsSearchMenuOpen(false)
     setActiveArtist('')
     setIsMobileSidebarOpen(false)
   }
@@ -1962,14 +2023,6 @@ function App() {
     if (!isAdminRoute && isAdmin) {
       navigate('/admin')
     }
-  }
-
-  const handleToggleLeftSidebar = () => {
-    setIsLeftSidebarCollapsed((prev) => {
-      const next = !prev
-      localStorage.setItem(LEFT_SIDEBAR_COLLAPSED_KEY, next ? '1' : '0')
-      return next
-    })
   }
 
   useEffect(() => {
@@ -2205,7 +2258,6 @@ function App() {
 
   return (
     <AppShell
-      isLeftSidebarCollapsed={isLeftSidebarCollapsed}
       leftSidebarWidth={leftSidebarWidth}
       rightSidebarWidth={rightSidebarWidth}
       isMobileSidebarOpen={isMobileSidebarOpen}
@@ -2257,8 +2309,6 @@ function App() {
           artists={artists}
           playTrackById={playTrackById}
           onOpenMessages={handleOpenMessages}
-          isCollapsed={isLeftSidebarCollapsed}
-          onToggleCollapse={handleToggleLeftSidebar}
           onResizeStart={handleLeftSidebarResizeStart}
         />
       )}
@@ -2277,32 +2327,69 @@ function App() {
                 >
                   <Icon className="h-4 w-4"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></Icon>
                 </button>
-                <button type="button" className="hidden rounded-full bg-black/40 p-2 sm:block"><Icon className="h-3 w-3"><path d="M15.4 4.6L9 11l6.4 6.4-1.4 1.4L6.2 11l7.8-7.8z"/></Icon></button>
-                <button type="button" className="hidden rounded-full bg-black/40 p-2 sm:block"><Icon className="h-3 w-3"><path d="M8.6 19.4L15 13 8.6 6.6 10 5.2l7.8 7.8-7.8 7.8z"/></Icon></button>
-                <button
-                  type="button"
-                  onClick={handleToggleLeftSidebar}
-                  className={`hidden rounded-full p-2 xl:block ${isLeftSidebarCollapsed ? 'bg-zinc-700 text-white' : 'bg-black/40 text-zinc-300'}`}
-                  title={isLeftSidebarCollapsed ? 'Mở rộng sidebar trái' : 'Thu gọn sidebar trái'}
-                >
-                  <Icon className="h-4 w-4"><path d="M4 4h6v16H4V4zm10 0h6v16h-6V4z"/></Icon>
-                </button>
-                <div className="flex min-w-0 flex-1 items-center gap-2 rounded-full bg-[#2a2a2a] px-3 py-2 text-sm text-zinc-300">
-                  <Icon className="h-4 w-4"><path d="M10 2a8 8 0 105.29 14l4.35 4.35 1.41-1.41-4.35-4.35A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z"/></Icon>
-                  <input
-                    ref={searchInputRef}
-                    placeholder="What do you want to play?"
-                    className="w-full min-w-0 bg-transparent text-sm outline-none sm:w-72"
-                    value={searchQuery}
-                    onChange={(event) => {
-                      setSearchQuery(event.target.value)
-                      if (activeArtist || isPlaylistRoute || isMessagesRoute || isAlbumRoute) {
-                        navigate('/')
-                        setActiveArtist('')
-                        setForcedPlaybackSongIds([])
-                      }
-                    }}
-                  />
+                <div className="relative w-full max-w-xl" ref={searchMenuRef}>
+                  <div className="flex min-w-0 items-center gap-3 rounded-full bg-[#2a2a2a] px-4 py-3 text-zinc-300 ring-1 ring-white/10 transition focus-within:ring-2 focus-within:ring-emerald-400/70">
+                    <Icon className="h-5 w-5"><path d="M10 2a8 8 0 105.29 14l4.35 4.35 1.41-1.41-4.35-4.35A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z"/></Icon>
+                    <input
+                      ref={searchInputRef}
+                      placeholder="What do you want to play?"
+                      className="w-full min-w-0 bg-transparent text-base outline-none"
+                      value={searchQuery}
+                      onFocus={() => setIsSearchMenuOpen(true)}
+                      onChange={(event) => {
+                        const nextValue = event.target.value
+                        setSearchQuery(nextValue)
+                        setIsSearchMenuOpen(Boolean(nextValue.trim()))
+                        if (activeArtist || isPlaylistRoute || isMessagesRoute || isAlbumRoute) {
+                          navigate('/')
+                          setActiveArtist('')
+                          setForcedPlaybackSongIds([])
+                        }
+                      }}
+                    />
+                  </div>
+
+                  {isSearchMenuOpen && searchQuery.trim() && (
+                    <div className="absolute left-0 right-0 z-30 mt-2 max-h-80 overflow-y-auto rounded-2xl border border-white/10 bg-[#0f1015] p-2 shadow-2xl shadow-black/60">
+                      {searchSuggestions.length === 0 ? (
+                        <p className="px-3 py-3 text-sm text-zinc-400">No results</p>
+                      ) : (
+                        searchSuggestions.map((song) => (
+                          <div
+                            key={`search-song-${song._id}`}
+                            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left hover:bg-white/10"
+                          >
+                            <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md bg-zinc-800">
+                              {song.coverUrl ? <img src={song.coverUrl} alt={song.title} className="h-full w-full object-cover" /> : null}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                playTrackById(song._id)
+                                setSearchQuery(song.title || '')
+                                setIsSearchMenuOpen(false)
+                              }}
+                              className="min-w-0 flex-1 text-left"
+                            >
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-base font-semibold text-zinc-100">{song.title}</p>
+                              <p className="truncate text-sm text-zinc-400">{song.artist}</p>
+                            </div>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleToggleSongPlayback(song._id)}
+                              className="rounded-full bg-white p-2 text-black hover:bg-zinc-100"
+                              title="Play/Pause"
+                              aria-label="Play or pause"
+                            >
+                              <Icon className="h-3.5 w-3.5"><path d={song._id === currentTrackId && isPlaying ? 'M7 5h3v14H7zm7 0h3v14h-3z' : 'M8 5v14l11-7z'} /></Icon>
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 

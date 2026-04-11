@@ -6,15 +6,13 @@ function AppShell({
   rightSidebar,
   audioNode,
   footerNode,
-  isLeftSidebarCollapsed = false,
   leftSidebarWidth = 320,
   rightSidebarWidth = 360,
   isMobileSidebarOpen = false,
   onCloseMobileSidebar = () => {},
   mobileBottomNav,
 }) {
-  const collapsedWidth = 96
-  const leftWidth = isLeftSidebarCollapsed ? collapsedWidth : leftSidebarWidth
+  const leftWidth = leftSidebarWidth
   const [isXlDesktop, setIsXlDesktop] = useState(() => (typeof window !== 'undefined' ? window.innerWidth >= 1280 : false))
   const [is2XlDesktop, setIs2XlDesktop] = useState(() => (typeof window !== 'undefined' ? window.innerWidth >= 1536 : false))
 

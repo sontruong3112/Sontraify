@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useRef, useState } from 'react'
+﻿import React from 'react'
 
 function LeftSidebar({
   handleGoHome,
@@ -13,30 +13,12 @@ function LeftSidebar({
   onSelectPlaylist = () => {},
   artists,
   playTrackById,
-  isCollapsed = false,
-  onToggleCollapse = () => {},
   onResizeStart = () => {},
-  hoverFlyoutEnabled = true,
   likedSongsCount = 0,
   likedSongs = [],
   onOpenMessages = () => {},
 }) {
-  const [isHoverExpanded, setIsHoverExpanded] = useState(false)
-  const openTimerRef = useRef(null)
-  const closeTimerRef = useRef(null)
-
-  useEffect(() => {
-    return () => {
-      if (openTimerRef.current) {
-        clearTimeout(openTimerRef.current)
-      }
-
-      if (closeTimerRef.current) {
-        clearTimeout(closeTimerRef.current)
-      }
-    }
-  }, [])
-  const effectiveCollapsed = isCollapsed && !isHoverExpanded
+  const effectiveCollapsed = false
 
   const sidePadding = effectiveCollapsed ? 'p-1' : 'p-2'
   const cardPadding = effectiveCollapsed ? 'p-2' : 'p-4'
@@ -44,54 +26,17 @@ function LeftSidebar({
     ? 'max-w-0 opacity-0'
     : 'max-w-[220px] opacity-100'
 
-  const flyoutClassName = isCollapsed && isHoverExpanded && hoverFlyoutEnabled
-    ? 'absolute inset-y-0 left-0 z-30 w-[360px] rounded-lg bg-[#121212]/96 shadow-2xl shadow-black/60 backdrop-blur-sm'
-    : ''
-
-  const handleMouseEnter = () => {
-    if (!isCollapsed || !hoverFlyoutEnabled) {
-      return
-    }
-
-    if (closeTimerRef.current) {
-      clearTimeout(closeTimerRef.current)
-      closeTimerRef.current = null
-    }
-
-    openTimerRef.current = setTimeout(() => {
-      setIsHoverExpanded(true)
-      openTimerRef.current = null
-    }, 90)
-  }
-
-  const handleMouseLeave = () => {
-    if (!isCollapsed || !hoverFlyoutEnabled) {
-      return
-    }
-
-    if (openTimerRef.current) {
-      clearTimeout(openTimerRef.current)
-      openTimerRef.current = null
-    }
-
-    closeTimerRef.current = setTimeout(() => {
-      setIsHoverExpanded(false)
-      closeTimerRef.current = null
-    }, 120)
-  }
+  const flyoutClassName = ''
 
   return (
     <aside
       className={`relative rounded-lg bg-[#121212] ${sidePadding} transition-all duration-300 ease-in-out ${flyoutClassName}`}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
     >
       <button
         type="button"
-        onDoubleClick={onToggleCollapse}
         onPointerDown={onResizeStart}
         className="absolute top-2 right-0 hidden h-[calc(100%-16px)] w-1 translate-x-1/2 cursor-col-resize rounded-full bg-transparent xl:block"
-        title="Kéo để đổi độ rộng sidebar, double click để thu gọn/mở rộng"
+        title="Kéo để đổi độ rộng sidebar"
         aria-label="Resize sidebar"
       />
 
@@ -109,18 +54,6 @@ function LeftSidebar({
             </span>
           </button>
 
-          <button
-            type="button"
-            onClick={onToggleCollapse}
-            className="rounded-full bg-zinc-800 p-2 text-zinc-200 hover:bg-zinc-700"
-            title={isCollapsed ? 'Ghim mở rộng sidebar' : 'Thu gọn sidebar'}
-          >
-            <svg viewBox="0 0 24 24" fill="currentColor" className="h-3 w-3" aria-hidden="true">
-              {effectiveCollapsed
-                ? <path d="M9 6l6 6-6 6" />
-                : <path d="M15 6l-6 6 6 6" />}
-            </svg>
-          </button>
         </div>
 
         <button

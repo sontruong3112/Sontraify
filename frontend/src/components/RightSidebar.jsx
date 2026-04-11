@@ -61,7 +61,7 @@ function RightSidebar({
       <button
         type="button"
         onPointerDown={onResizeStart}
-        className="absolute bottom-2 left-0 top-2 hidden w-1 -translate-x-1/2 cursor-col-resize rounded-full bg-transparent 2xl:block"
+        className="absolute bottom-2 left-0 top-2 hidden w-1 -translate-x-1/2 cursor-col-resize rounded-full bg-transparent xl:block"
         title="Kéo để đổi độ rộng sidebar"
         aria-label="Resize right sidebar"
       />
