@@ -10,7 +10,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: CLIENT_ORIGIN
-        value: https://sontraify-frontend.onrender.com
+        value: https://sontraify-2.onrender.com
       - key: MONGODB_URI
         sync: false
       - key: JWT_ACCESS_SECRET
