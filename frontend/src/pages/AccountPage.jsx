@@ -220,13 +220,13 @@ function AccountPage({
           <button
             type="submit"
             disabled={saving || avatarUploading}
-            className="type-button-sm rounded-full bg-green-500 px-4 py-2 font-semibold text-black disabled:opacity-70"
+            className="type-button-sm rounded-full bg-white px-4 py-2 font-semibold text-black disabled:opacity-70"
           >
             {saving ? 'Đang lưu...' : 'Save profile'}
           </button>
         </div>
         {profileMessage && (
-          <p className={`mt-3 rounded px-2 py-1 text-xs ${profileMessage.includes('thanh cong') ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-200'}`}>
+          <p className={`mt-3 rounded px-2 py-1 text-xs ${profileMessage.includes('thanh cong') ? 'bg-white/20 text-white' : 'bg-red-500/20 text-red-200'}`}>
             {profileMessage}
           </p>
         )}

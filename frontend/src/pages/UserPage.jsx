@@ -48,7 +48,7 @@ function UserPage({
           event.stopPropagation()
           onToggleSongPlayback(song?._id)
         }}
-        className="rounded-full bg-green-500 p-3 text-black shadow-lg shadow-black/50 transition-all duration-200 ease-out hover:scale-105 hover:bg-green-400 active:scale-95"
+        className="rounded-full bg-white p-3 text-black shadow-lg shadow-black/50 transition-all duration-200 ease-out hover:scale-105 hover:bg-zinc-100 active:scale-95"
         title={showPause ? 'Pause' : 'Play'}
         aria-label={showPause ? 'Pause' : 'Play'}
       >
@@ -186,7 +186,7 @@ function UserPage({
                           event.stopPropagation()
                           onToggleSongPlayback(song._id)
                         }}
-                        className={`relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors ${isSongActive(song._id) ? 'bg-green-500 text-black' : 'text-zinc-300 hover:bg-zinc-700 hover:text-white'}`}
+                        className={`relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors ${isSongActive(song._id) ? 'bg-white text-black' : 'text-zinc-300 hover:bg-zinc-700 hover:text-white'}`}
                         title={isSongActive(song._id) && isPlaying ? 'Pause' : 'Play'}
                         aria-label={isSongActive(song._id) && isPlaying ? 'Pause' : 'Play'}
                       >
@@ -309,7 +309,7 @@ function UserPage({
                   <button
                     type="button"
                     onClick={() => toggleLikeSong(song._id)}
-                    className={`type-button-sm mt-2 rounded px-2 py-1 ${isSongLiked(song._id) ? 'bg-green-500/20 text-green-300' : 'bg-zinc-800 text-zinc-300'}`}
+                    className={`type-button-sm mt-2 rounded px-2 py-1 ${isSongLiked(song._id) ? 'bg-white text-black' : 'bg-zinc-800 text-zinc-300'}`}
                   >
                     {isSongLiked(song._id) ? 'Liked' : 'Like'}
                   </button>
@@ -347,7 +347,7 @@ function UserPage({
                         type="button"
                         disabled={playlistActionLoadingId === `add-${song._id}`}
                         onClick={() => handleAddSongToPlaylist(song._id)}
-                        className="type-button-sm rounded-md bg-green-500 px-2 py-1 text-black disabled:opacity-70"
+                        className="type-button-sm rounded-md bg-white px-2 py-1 text-black disabled:opacity-70"
                       >
                         {playlistActionLoadingId === `add-${song._id}` ? '...' : 'Add'}
                       </button>
@@ -493,7 +493,7 @@ function UserPage({
                   <button
                     type="button"
                     onClick={() => toggleLikeSong(song._id)}
-                    className={`type-button-sm mt-2 rounded px-2 py-1 ${isSongLiked(song._id) ? 'bg-green-500/20 text-green-300' : 'bg-zinc-800 text-zinc-300'}`}
+                    className={`type-button-sm mt-2 rounded px-2 py-1 ${isSongLiked(song._id) ? 'bg-white text-black' : 'bg-zinc-800 text-zinc-300'}`}
                   >
                     {isSongLiked(song._id) ? 'Liked' : 'Like'}
                   </button>

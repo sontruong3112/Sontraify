@@ -263,7 +263,7 @@ function PlaylistPage({
                   type="button"
                   disabled={playlistLoading}
                   onClick={handleSavePlaylistName}
-                  className="type-button-sm rounded-full bg-green-500 px-3 py-1 text-black disabled:opacity-70"
+                  className="type-button-sm rounded-full bg-white px-3 py-1 text-black disabled:opacity-70"
                 >
                   Save
                 </button>
@@ -296,7 +296,7 @@ function PlaylistPage({
                   type="button"
                   disabled={playlistActionLoadingId === `cover-${playlist?._id}`}
                   onClick={handleSavePlaylistCover}
-                  className="type-button-sm rounded-full bg-green-500 px-3 py-1 text-black disabled:opacity-70"
+                  className="type-button-sm rounded-full bg-white px-3 py-1 text-black disabled:opacity-70"
                 >
                   Save
                 </button>
@@ -368,7 +368,7 @@ function PlaylistPage({
                           type="button"
                           disabled={playlistCoverUploadLoading}
                           onClick={() => coverFileInputRef.current?.click()}
-                          className="w-full rounded-md bg-green-500 px-3 py-2 text-left text-sm font-semibold text-black disabled:opacity-70"
+                          className="w-full rounded-md bg-white px-3 py-2 text-left text-sm font-semibold text-black disabled:opacity-70"
                         >
                           {playlistCoverUploadLoading ? 'Uploading cover...' : 'Upload cover image'}
                         </button>
@@ -432,7 +432,7 @@ function PlaylistPage({
                 type="button"
                 disabled={selectedSongIds.length === 0}
                 onClick={handleQueueSelectedSongs}
-                className="type-button-sm rounded bg-green-500 px-2 py-1 text-black disabled:opacity-60"
+                className="type-button-sm rounded bg-white px-2 py-1 text-black disabled:opacity-60"
               >
                 Queue selected ({selectedSongIds.length})
               </button>
@@ -513,7 +513,7 @@ function PlaylistPage({
                     event.stopPropagation()
                     onToggleSongPlayback(song._id)
                   }}
-                  className={`relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors ${song._id === currentTrackId ? 'bg-green-500 text-black' : 'text-zinc-400 hover:bg-zinc-700 hover:text-white'}`}
+                  className={`relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors ${song._id === currentTrackId ? 'bg-white text-black' : 'text-zinc-400 hover:bg-zinc-700 hover:text-white'}`}
                   title={song._id === currentTrackId && isPlaying ? 'Pause' : 'Play'}
                   aria-label={song._id === currentTrackId && isPlaying ? 'Pause' : 'Play'}
                 >
@@ -595,7 +595,7 @@ function PlaylistPage({
                 <button
                   type="button"
                   onClick={() => toggleLikeSong(song._id)}
-                  className={`rounded px-2 py-1 text-[11px] ${isSongLiked(song._id) ? 'bg-green-500/20 text-green-300' : 'bg-zinc-800 text-zinc-300'}`}
+                  className={`rounded px-2 py-1 text-[11px] ${isSongLiked(song._id) ? 'bg-white text-black' : 'bg-zinc-800 text-zinc-300'}`}
                 >
                   {isSongLiked(song._id) ? 'Liked' : 'Like'}
                 </button>

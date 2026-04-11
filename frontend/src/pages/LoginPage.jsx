@@ -126,11 +126,11 @@ function LoginPage({
             minLength={6}
             required
           />
-          <button
-            type="submit"
-            disabled={authLoading || googleLoading}
-            className="w-full rounded-full bg-green-500 px-3 py-3 text-sm font-semibold text-black transition hover:bg-green-400 disabled:opacity-70"
-          >
+           <button
+             type="submit"
+             disabled={authLoading || googleLoading}
+             className="w-full rounded-full bg-white px-3 py-3 text-sm font-semibold text-black transition hover:bg-zinc-100 disabled:opacity-70"
+           >
             {authLoading ? 'Vui lòng chờ...' : authMode === 'register' ? 'Tạo tài khoản' : 'Continue'}
           </button>
         </form>

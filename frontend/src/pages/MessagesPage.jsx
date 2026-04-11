@@ -579,9 +579,9 @@ function MessagesPage({ currentUser, accessToken, onOpenLogin = () => {} }) {
             value={userSearchKeyword}
             onChange={(event) => setUserSearchKeyword(event.target.value)}
             placeholder="Tìm theo tên hoặc email"
-            className="w-full rounded-lg border border-white/10 bg-zinc-950/80 px-3 py-2 text-sm text-zinc-100 outline-none ring-green-500/40 transition focus:ring-2"
+            className="w-full rounded-lg border border-white/10 bg-zinc-950/80 px-3 py-2 text-sm text-zinc-100 outline-none ring-white/40 transition focus:ring-2"
           />
-          <button type="submit" className="rounded-lg bg-green-500 px-3 py-2 text-sm font-semibold text-black transition hover:bg-green-400">Tìm</button>
+          <button type="submit" className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-black transition hover:bg-zinc-100">Tìm</button>
         </form>
 
         {userSearchResults.length > 0 && (
@@ -603,7 +603,7 @@ function MessagesPage({ currentUser, accessToken, onOpenLogin = () => {} }) {
                       type="button"
                       disabled={isSubmitting}
                       onClick={() => handleSendRequest(user.id)}
-                      className="rounded-md bg-green-500 px-2 py-1 text-xs font-semibold text-black disabled:opacity-60"
+                      className="rounded-md bg-white px-2 py-1 text-xs font-semibold text-black disabled:opacity-60"
                     >
                       Add Friend
                     </button>
@@ -615,7 +615,7 @@ function MessagesPage({ currentUser, accessToken, onOpenLogin = () => {} }) {
                         type="button"
                         disabled={isSubmitting}
                         onClick={() => handleRespondRequest(user.id, 'accept')}
-                        className="rounded-md bg-green-500 px-2 py-1 text-xs font-semibold text-black disabled:opacity-60"
+                        className="rounded-md bg-white px-2 py-1 text-xs font-semibold text-black disabled:opacity-60"
                       >
                         Accept
                       </button>
@@ -653,7 +653,7 @@ function MessagesPage({ currentUser, accessToken, onOpenLogin = () => {} }) {
                     type="button"
                     disabled={isSubmitting}
                     onClick={() => handleRespondRequest(user.id, 'accept')}
-                    className="rounded-md bg-green-500 px-2 py-1 text-xs font-semibold text-black disabled:opacity-60"
+                    className="rounded-md bg-white px-2 py-1 text-xs font-semibold text-black disabled:opacity-60"
                   >
                     Accept
                   </button>
@@ -681,7 +681,7 @@ function MessagesPage({ currentUser, accessToken, onOpenLogin = () => {} }) {
                 key={friend.id}
                 type="button"
                 onClick={() => setSelectedFriendId(friend.id)}
-                className={`w-full rounded-lg border px-3 py-2 text-left transition ${selectedFriendId === friend.id ? 'border-green-400/40 bg-green-500/20 text-green-100' : 'border-white/10 bg-zinc-900/70 text-zinc-100 hover:bg-zinc-800'}`}
+                className={`w-full rounded-lg border px-3 py-2 text-left transition ${selectedFriendId === friend.id ? 'border-white/40 bg-white/15 text-white' : 'border-white/10 bg-zinc-900/70 text-zinc-100 hover:bg-zinc-800'}`}
               >
                 <div className="flex items-center gap-2">
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-700 text-xs font-bold text-white">
@@ -712,7 +712,7 @@ function MessagesPage({ currentUser, accessToken, onOpenLogin = () => {} }) {
         <div className="mb-4 flex items-center justify-between border-b border-white/10 pb-3">
           <div className="flex min-w-0 items-center gap-3">
             {selectedFriend ? (
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-500 text-sm font-bold text-black">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-sm font-bold text-black">
                 {getInitials(selectedFriend.name)}
               </div>
             ) : (
@@ -797,7 +797,7 @@ function MessagesPage({ currentUser, accessToken, onOpenLogin = () => {} }) {
                 <button
                   type="submit"
                   disabled={isSubmitting || !messageDraft.trim()}
-                  className="rounded-lg bg-green-500 px-4 py-2.5 text-sm font-semibold text-black transition hover:bg-green-400 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-black transition hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Send
                 </button>

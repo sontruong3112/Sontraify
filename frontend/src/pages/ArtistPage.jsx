@@ -1,10 +1,12 @@
-﻿import React, { useMemo, useState } from 'react'
+﻿import React, { useEffect, useMemo, useState } from 'react'
 import { formatDuration } from '../utils/formatDuration'
 
 function ArtistPage({
   artist = null,
   artistLoading = false,
   playTrackById = () => {},
+  onPlayAlbumOnly = () => {},
+  onPlaySongInAlbum = () => {},
   currentTrackId = '',
   isPlaying = false,
   onToggleSongPlayback = () => {},
@@ -15,9 +17,23 @@ function ArtistPage({
   onBackToHome = () => {},
 }) {
   const albums = Array.isArray(artist?.albums) ? artist.albums : []
+  const [selectedAlbumId, setSelectedAlbumId] = useState('')
   const allSongs = useMemo(() => albums.flatMap((album) => (Array.isArray(album.songs) ? album.songs : [])), [albums])
   const heroSong = allSongs[0] || null
   const [sortMode, setSortMode] = useState('latest')
+  const selectedAlbum = useMemo(() => albums.find((album) => album.id === selectedAlbumId) || null, [albums, selectedAlbumId])
+  const selectedAlbumSongs = Array.isArray(selectedAlbum?.songs) ? selectedAlbum.songs : []
+
+  useEffect(() => {
+    if (!albums.length) {
+      setSelectedAlbumId('')
+      return
+    }
+
+    if (!selectedAlbumId || !albums.some((album) => album.id === selectedAlbumId)) {
+      setSelectedAlbumId(albums[0].id)
+    }
+  }, [albums, selectedAlbumId])
 
   const topTracks = useMemo(() => {
     const songMap = new Map()
@@ -66,7 +82,7 @@ function ArtistPage({
           <button
             type="button"
             onClick={() => playTrackById(heroSong._id)}
-            className="type-button-sm mt-5 inline-flex items-center gap-2 rounded-full bg-green-500 px-4 py-2 text-black hover:bg-green-400"
+            className="type-button-sm mt-5 inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-black hover:bg-zinc-100"
           >
             Play {heroSong.title}
           </button>
@@ -111,7 +127,7 @@ function ArtistPage({
                     event.stopPropagation()
                     onToggleSongPlayback(song._id)
                   }}
-                  className={`relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors ${song._id === currentTrackId ? 'bg-green-500 text-black' : 'text-zinc-400 hover:bg-zinc-700 hover:text-white'}`}
+                  className={`relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors ${song._id === currentTrackId ? 'bg-white text-black' : 'text-zinc-400 hover:bg-zinc-700 hover:text-white'}`}
                   title={song._id === currentTrackId && isPlaying ? 'Pause' : 'Play'}
                   aria-label={song._id === currentTrackId && isPlaying ? 'Pause' : 'Play'}
                 >
@@ -172,7 +188,7 @@ function ArtistPage({
                 <button
                   type="button"
                   onClick={() => toggleLikeSong(song._id)}
-                  className={`type-button-sm rounded px-2 py-1 ${isSongLiked(song._id) ? 'bg-green-500/20 text-green-300' : 'bg-zinc-800 text-zinc-300'}`}
+                  className={`type-button-sm rounded px-2 py-1 ${isSongLiked(song._id) ? 'bg-white text-black' : 'bg-zinc-800 text-zinc-300'}`}
                 >
                   {isSongLiked(song._id) ? 'Liked' : 'Like'}
                 </button>
@@ -190,15 +206,68 @@ function ArtistPage({
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {albums.map((album) => (
-              <article key={`album-${album.id}`} className="rounded-lg bg-[#181818] p-3">
+              <article
+                key={`album-${album.id}`}
+                className={`rounded-lg p-3 ${selectedAlbumId === album.id ? 'bg-zinc-700/40 ring-1 ring-white/30' : 'bg-[#181818]'}`}
+              >
                 <div className="mb-2 aspect-video overflow-hidden rounded-md bg-zinc-800">
                   {album.coverUrl ? <img src={album.coverUrl} alt={album.title} className="h-full w-full object-cover" /> : null}
                 </div>
                 <h3 className="truncate text-sm font-semibold text-zinc-100">{album.title}</h3>
                 <p className="mt-1 text-xs text-zinc-400">{Array.isArray(album.songs) ? album.songs.length : 0} tracks</p>
+                <button
+                  type="button"
+                  onClick={() => setSelectedAlbumId(album.id)}
+                  className="type-button-sm mt-2 rounded-full bg-zinc-200 px-3 py-1 text-xs font-semibold text-black hover:bg-white"
+                >
+                  Open album
+                </button>
               </article>
             ))}
           </div>
+
+          {selectedAlbum && (
+            <div className="mt-4 rounded-lg bg-[#181818] p-3">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h3 className="text-base font-semibold text-white">{selectedAlbum.title}</h3>
+                  <p className="text-xs text-zinc-400">{selectedAlbumSongs.length} tracks in this album</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onPlayAlbumOnly(selectedAlbumSongs)}
+                  className="type-button-sm rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-black hover:bg-zinc-100"
+                >
+                  Play album
+                </button>
+              </div>
+
+              {selectedAlbumSongs.length === 0 ? (
+                <p className="text-xs text-zinc-500">This album has no songs yet.</p>
+              ) : (
+                <div className="space-y-2">
+                  {selectedAlbumSongs.map((song, index) => (
+                    <button
+                      key={`album-song-${song._id}`}
+                      type="button"
+                      onClick={() => onPlaySongInAlbum(song._id, selectedAlbumSongs)}
+                      className="flex w-full items-center gap-3 rounded-md bg-zinc-900/70 px-2 py-2 text-left hover:bg-zinc-800"
+                    >
+                      <span className="w-5 text-center text-xs text-zinc-400">{index + 1}</span>
+                      <div className="h-8 w-8 overflow-hidden rounded bg-zinc-800">
+                        {song.coverUrl ? <img src={song.coverUrl} alt={song.title} className="h-full w-full object-cover" /> : null}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-xs font-semibold text-zinc-100">{song.title}</p>
+                        <p className="truncate text-[11px] text-zinc-400">{song.artist}</p>
+                      </div>
+                      <span className="text-[11px] text-zinc-500">{formatDuration(song.duration || 0)}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </section>
       )}
     </>

@@ -94,7 +94,7 @@ function AdminPage({
             />
           </div>
           <div className="sm:col-span-2 flex gap-2">
-            <button type="submit" disabled={songMutationLoading} className="type-button-sm rounded-md bg-green-500 px-4 py-2 text-black">
+            <button type="submit" disabled={songMutationLoading} className="type-button-sm rounded-md bg-white px-4 py-2 text-black">
               {songMutationLoading ? 'Saving...' : editingSongId ? 'Update song' : 'Create song'}
             </button>
             {editingSongId && (
@@ -269,7 +269,7 @@ function AdminPage({
             <input name="avatarUrl" value={adminArtistForm.avatarUrl} onChange={onAdminArtistInput} placeholder="Avatar URL" className="w-full rounded-md bg-zinc-900 px-3 py-2 text-sm" />
             <input name="bannerUrl" value={adminArtistForm.bannerUrl} onChange={onAdminArtistInput} placeholder="Banner URL" className="w-full rounded-md bg-zinc-900 px-3 py-2 text-sm" />
             <textarea name="bio" value={adminArtistForm.bio} onChange={onAdminArtistInput} placeholder="Artist bio" className="min-h-20 w-full rounded-md bg-zinc-900 px-3 py-2 text-sm" />
-            <button type="submit" disabled={artistMutationLoading} className="type-button-sm rounded-md bg-green-500 px-4 py-2 text-black disabled:opacity-70">
+            <button type="submit" disabled={artistMutationLoading} className="type-button-sm rounded-md bg-white px-4 py-2 text-black disabled:opacity-70">
               {artistMutationLoading ? 'Saving...' : 'Create artist'}
             </button>
           </form>

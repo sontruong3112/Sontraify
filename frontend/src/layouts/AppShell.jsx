@@ -62,7 +62,7 @@ function AppShell({
           {mainContent}
         </div>
 
-        <div className="2xl:hidden">
+        <div className="hidden xl:block 2xl:hidden">
           {rightSidebar}
         </div>
 

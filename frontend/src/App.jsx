@@ -98,6 +98,7 @@ function App() {
   const [likedSongIds, setLikedSongIds] = useState([])
   const [recentTrackIds, setRecentTrackIds] = useState([])
   const [queuedTrackIds, setQueuedTrackIds] = useState([])
+  const [forcedPlaybackSongIds, setForcedPlaybackSongIds] = useState([])
   const [playerToast, setPlayerToast] = useState('')
   const [syncPendingCount, setSyncPendingCount] = useState(0)
   const [syncStatus, setSyncStatus] = useState('idle')
@@ -1157,6 +1158,7 @@ function App() {
   } = useAudioPlayer({
     songs,
     filteredSongs,
+    forcedPlaybackSongIds,
     highlightedSong,
     currentTrackId,
     setCurrentTrackId,
@@ -1646,6 +1648,7 @@ function App() {
   }, [queuedTrackIds, songs, playbackQueue, currentTrackId])
 
   const handleGoHome = () => {
+    setForcedPlaybackSongIds([])
     navigate('/')
     setSearchQuery('')
     setActiveArtist('')
@@ -1763,6 +1766,7 @@ function App() {
   }
 
   const handleOpenMessages = () => {
+    setForcedPlaybackSongIds([])
     setIsMobileSidebarOpen(false)
     setActiveArtist('')
     navigate('/messages')
@@ -1775,6 +1779,7 @@ function App() {
     }
 
     navigate(`/artist/${encodeURIComponent(value)}`)
+    setForcedPlaybackSongIds([])
     setSearchQuery('')
     showPlayerToast('Artist page opened')
   }
@@ -1801,6 +1806,7 @@ function App() {
     }
 
     setSelectedPlaylistId(value)
+    setForcedPlaybackSongIds([])
     setActiveArtist('')
     setSearchQuery('')
     setIsMobileSidebarOpen(false)
@@ -1808,7 +1814,43 @@ function App() {
   }
 
   const handleClearArtistRadio = () => {
+    setForcedPlaybackSongIds([])
     navigate('/')
+  }
+
+  const handlePlayAlbumOnly = (albumSongs = []) => {
+    const normalizedIds = Array.from(new Set(
+      (Array.isArray(albumSongs) ? albumSongs : [])
+        .map((song) => String(song?._id || ''))
+        .filter(Boolean),
+    ))
+
+    if (normalizedIds.length === 0) {
+      return
+    }
+
+    setForcedPlaybackSongIds(normalizedIds)
+    playTrackById(normalizedIds[0])
+    showPlayerToast('Playing selected album')
+  }
+
+  const handlePlaySongInAlbum = (songId, albumSongs = []) => {
+    const normalizedSongId = String(songId || '').trim()
+    if (!normalizedSongId) {
+      return
+    }
+
+    const normalizedIds = Array.from(new Set(
+      (Array.isArray(albumSongs) ? albumSongs : [])
+        .map((song) => String(song?._id || ''))
+        .filter(Boolean),
+    ))
+
+    if (normalizedIds.length > 0) {
+      setForcedPlaybackSongIds(normalizedIds)
+    }
+
+    playTrackById(normalizedSongId)
   }
 
   const handleOpenAdmin = () => {
@@ -2128,8 +2170,8 @@ function App() {
         <>
         <main className="rounded-lg bg-[#121212] p-2">
           <div className="rounded-lg bg-linear-to-b from-[#1a1f4d] via-[#121212] to-[#121212] p-4">
-            <div className="mb-5 flex items-center justify-between gap-3">
-              <div className="flex min-w-0 items-center gap-3">
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-2 sm:gap-3">
+              <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
                 <button
                   type="button"
                   onClick={() => setIsMobileSidebarOpen(true)}
@@ -2138,8 +2180,8 @@ function App() {
                 >
                   <Icon className="h-4 w-4"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></Icon>
                 </button>
-                <button type="button" className="rounded-full bg-black/40 p-2"><Icon className="h-3 w-3"><path d="M15.4 4.6L9 11l6.4 6.4-1.4 1.4L6.2 11l7.8-7.8z"/></Icon></button>
-                <button type="button" className="rounded-full bg-black/40 p-2"><Icon className="h-3 w-3"><path d="M8.6 19.4L15 13 8.6 6.6 10 5.2l7.8 7.8-7.8 7.8z"/></Icon></button>
+                <button type="button" className="hidden rounded-full bg-black/40 p-2 sm:block"><Icon className="h-3 w-3"><path d="M15.4 4.6L9 11l6.4 6.4-1.4 1.4L6.2 11l7.8-7.8z"/></Icon></button>
+                <button type="button" className="hidden rounded-full bg-black/40 p-2 sm:block"><Icon className="h-3 w-3"><path d="M8.6 19.4L15 13 8.6 6.6 10 5.2l7.8 7.8-7.8 7.8z"/></Icon></button>
                 <button
                   type="button"
                   onClick={handleToggleLeftSidebar}
@@ -2148,12 +2190,12 @@ function App() {
                 >
                   <Icon className="h-4 w-4"><path d="M4 4h6v16H4V4zm10 0h6v16h-6V4z"/></Icon>
                 </button>
-                <div className="flex min-w-0 items-center gap-2 rounded-full bg-[#2a2a2a] px-3 py-2 text-sm text-zinc-300">
+                <div className="flex min-w-0 flex-1 items-center gap-2 rounded-full bg-[#2a2a2a] px-3 py-2 text-sm text-zinc-300">
                   <Icon className="h-4 w-4"><path d="M10 2a8 8 0 105.29 14l4.35 4.35 1.41-1.41-4.35-4.35A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z"/></Icon>
                   <input
                     ref={searchInputRef}
                     placeholder="What do you want to play?"
-                    className="w-48 bg-transparent text-sm outline-none sm:w-72"
+                    className="w-full min-w-0 bg-transparent text-sm outline-none sm:w-72"
                     value={searchQuery}
                     onChange={(event) => {
                       setSearchQuery(event.target.value)
@@ -2171,7 +2213,7 @@ function App() {
                   <button
                     type="button"
                     onClick={() => (isAdminRoute ? navigate('/') : handleOpenAdmin())}
-                    className="type-button-sm rounded-full bg-green-500 px-3 py-2 text-black"
+                    className="type-button-sm rounded-full bg-white px-3 py-2 text-black"
                   >
                     {isAdminRoute ? 'User mode' : 'Admin mode'}
                   </button>
@@ -2195,7 +2237,7 @@ function App() {
                   </>
                 ) : (
                   <>
-                    <button type="button" className="type-button-sm rounded-full bg-zinc-800 px-3 py-2">Install App</button>
+                    <button type="button" className="type-button-sm hidden rounded-full bg-zinc-800 px-3 py-2 sm:block">Install App</button>
                     <div className="relative" ref={chatMenuRef}>
                       <button
                         type="button"
@@ -2208,7 +2250,7 @@ function App() {
                       </button>
 
                       {isChatListOpen && (
-                        <div className="absolute right-0 mt-2 w-80 rounded-xl border border-white/10 bg-zinc-900 p-2 shadow-2xl shadow-black/60">
+                        <div className="absolute right-0 mt-2 w-[min(20rem,calc(100vw-1rem))] rounded-xl border border-white/10 bg-zinc-900 p-2 shadow-2xl shadow-black/60">
                           <div className="mb-2 px-2 pt-1">
                             <p className="text-base font-semibold text-white">Chats</p>
                             <p className="text-xs text-zinc-400">Select a friend to open a mini chat window</p>
@@ -2341,7 +2383,8 @@ function App() {
               </div>
             </div>
 
-            <div className="mb-4 flex flex-wrap gap-2">
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              <img src="/logo-white.svg" alt="Sontraify in-page logo" className="h-6 w-6 rounded-sm" />
               <button type="button" className="type-button-sm rounded-full bg-white px-3 py-1 text-black">All</button>
               <button type="button" className="type-button-sm rounded-full bg-zinc-800 px-3 py-1">Music</button>
               <button type="button" className="type-button-sm rounded-full bg-zinc-800 px-3 py-1">Podcasts</button>
@@ -2416,6 +2459,8 @@ function App() {
                   artist={selectedArtistDetail}
                   artistLoading={selectedArtistLoading}
                 playTrackById={playTrackById}
+                onPlayAlbumOnly={handlePlayAlbumOnly}
+                onPlaySongInAlbum={handlePlaySongInAlbum}
                 currentTrackId={currentTrackId}
                 isPlaying={isPlaying}
                 onToggleSongPlayback={handleToggleSongPlayback}
@@ -2488,7 +2533,7 @@ function App() {
         </main>
 
         {activeMiniChatFriend && (
-          <div className="fixed bottom-24 right-4 z-50 w-[min(380px,calc(100vw-24px))] overflow-hidden rounded-xl border border-white/10 bg-zinc-900 shadow-2xl shadow-black/60">
+          <div className="fixed bottom-24 left-2 right-2 z-50 w-auto overflow-hidden rounded-xl border border-white/10 bg-zinc-900 shadow-2xl shadow-black/60 sm:left-auto sm:right-4 sm:w-[min(380px,calc(100vw-24px))]">
             <div className="flex items-center justify-between bg-zinc-800/80 px-3 py-2">
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-white">{activeMiniChatFriend.name}</p>
@@ -2534,7 +2579,7 @@ function App() {
               <button
                 type="submit"
                 disabled={!miniChatDraft.trim() || miniChatSending}
-                className="rounded-full bg-green-500 px-3 py-2 text-xs font-semibold text-black disabled:opacity-60"
+                className="rounded-full bg-white px-3 py-2 text-xs font-semibold text-black disabled:opacity-60"
               >
                 Send
               </button>

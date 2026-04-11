@@ -27,6 +27,7 @@ export const getInitialTrackId = () => localStorage.getItem(PLAYER_TRACK_ID_KEY)
 export function useAudioPlayer({
   songs,
   filteredSongs,
+  forcedPlaybackSongIds = [],
   highlightedSong,
   currentTrackId,
   setCurrentTrackId,
@@ -48,8 +49,20 @@ export function useAudioPlayer({
   const progressWrapperRef = useRef(null)
 
   const playbackQueue = useMemo(() => {
+    if (Array.isArray(forcedPlaybackSongIds) && forcedPlaybackSongIds.length > 0) {
+      const songMap = new Map(songs.map((song) => [song._id, song]))
+
+      const constrained = forcedPlaybackSongIds
+        .map((songId) => songMap.get(songId))
+        .filter(Boolean)
+
+      if (constrained.length > 0) {
+        return constrained
+      }
+    }
+
     return filteredSongs.length > 0 ? filteredSongs : songs
-  }, [filteredSongs, songs])
+  }, [filteredSongs, songs, forcedPlaybackSongIds])
 
   const safeTrackDuration = Math.max(trackDuration, 0)
   const progressPercent = safeTrackDuration > 0

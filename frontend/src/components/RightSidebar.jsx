@@ -45,7 +45,7 @@ function RightSidebar({
           event.stopPropagation()
           onToggleSongPlayback(song?._id)
         }}
-        className="rounded-full bg-green-500 p-1.5 text-black shadow-md shadow-black/40 transition-all duration-200 hover:scale-105 hover:bg-green-400"
+        className="rounded-full bg-white p-1.5 text-black shadow-md shadow-black/40 transition-all duration-200 hover:scale-105 hover:bg-zinc-200"
         title={showPause ? 'Pause' : 'Play'}
         aria-label={showPause ? 'Pause' : 'Play'}
       >
@@ -71,7 +71,7 @@ function RightSidebar({
           <button
             type="button"
             onClick={() => toggleLikeSong(highlightedSong?._id)}
-            className={`type-button-sm rounded-full px-2 py-1 ${isSongLiked(highlightedSong?._id) ? 'bg-green-500 text-black' : 'bg-zinc-800'}`}
+            className={`type-button-sm rounded-full px-2 py-1 ${isSongLiked(highlightedSong?._id) ? 'bg-white text-black' : 'bg-zinc-800'}`}
           >
             {isSongLiked(highlightedSong?._id) ? 'Liked' : '+'}
           </button>
