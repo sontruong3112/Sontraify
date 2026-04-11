@@ -33,9 +33,6 @@ function FooterPlayer({
   handleOpenQueuePanel = () => {},
   playerToast = '',
   onVolumeWheel = () => {},
-  syncStatus = 'idle',
-  syncPendingCount = 0,
-  isOnline = true,
   playbackRate = 1,
   handleCyclePlaybackRate = () => {},
 }) {
@@ -70,34 +67,6 @@ function FooterPlayer({
       </Icon>
     )
   }, [Icon, isMuted, volumeLevel])
-
-  const syncBadge = useMemo(() => {
-    if (!isOnline || syncStatus === 'offline') {
-      return {
-        text: `Offline${syncPendingCount > 0 ? ` (${syncPendingCount})` : ''}`,
-        className: 'bg-orange-500/20 text-orange-300',
-      }
-    }
-
-    if (syncStatus === 'syncing') {
-      return {
-        text: `Syncing${syncPendingCount > 0 ? ` (${syncPendingCount})` : ''}`,
-        className: 'bg-sky-500/20 text-sky-300',
-      }
-    }
-
-    if (syncStatus === 'error') {
-      return {
-        text: `Retrying${syncPendingCount > 0 ? ` (${syncPendingCount})` : ''}`,
-        className: 'bg-rose-500/20 text-rose-300',
-      }
-    }
-
-    return {
-      text: 'Synced',
-      className: 'bg-emerald-500/20 text-emerald-300',
-    }
-  }, [isOnline, syncStatus, syncPendingCount])
 
   return (
     <footer className="fixed inset-x-0 bottom-0 z-20 border-t border-white/10 bg-[#000000]/96 px-4 py-3 backdrop-blur-sm">
@@ -195,9 +164,6 @@ function FooterPlayer({
         </div>
 
         <div className="flex items-center justify-start gap-3 text-zinc-300 md:justify-end">
-          <span className={`type-badge hidden rounded-full px-2 py-1 lg:inline-flex ${syncBadge.className}`}>
-            {syncBadge.text}
-          </span>
           <button type="button" className="hidden hover:text-white lg:block" title="Now playing view"><Icon className="h-5 w-5"><path d="M5 5h14v2H5zm0 6h9v2H5zm0 6h14v2H5z"/></Icon></button>
           <button type="button" onClick={handleOpenQueuePanel} className="hover:text-white" title={`Hàng đợi (${queueCount || 0})`}>
             <div className="relative">

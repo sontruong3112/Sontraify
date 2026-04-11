@@ -18,6 +18,7 @@ function RightSidebar({
   removeSongFromQueueAt = () => {},
   moveSongInQueue = () => {},
   clearQueue = () => {},
+  onResizeStart = () => {},
 }) {
   const radioTitle = `${highlightedSong?.artist || 'Unknown Artist'} Radio`
   const queueListRef = useRef(null)
@@ -56,7 +57,14 @@ function RightSidebar({
   }
 
   return (
-    <aside className="rounded-lg bg-[#121212] p-2">
+    <aside className="relative rounded-lg bg-[#121212] p-2">
+      <button
+        type="button"
+        onPointerDown={onResizeStart}
+        className="absolute bottom-2 left-0 top-2 hidden w-1 -translate-x-1/2 cursor-col-resize rounded-full bg-transparent 2xl:block"
+        title="Kéo để đổi độ rộng sidebar"
+        aria-label="Resize right sidebar"
+      />
       <section className="rounded-lg bg-[#181818] p-4">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="truncate text-2xl font-bold" title={radioTitle}>{radioTitle}</h2>

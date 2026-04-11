@@ -1,5 +1,6 @@
 ﻿import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { io } from 'socket.io-client'
 import { authApi } from './api/client'
 import { getInitialTrackId, useAudioPlayer } from './hooks/useAudioPlayer'
 import { useAuthSession } from './hooks/useAuthSession'
@@ -26,6 +27,9 @@ const GUEST_LIKED_SONGS_KEY = 'guest_liked_song_ids'
 const GUEST_RECENT_TRACKS_KEY = 'guest_recent_track_ids'
 const GUEST_QUEUE_TRACKS_KEY = 'guest_queue_track_ids'
 const PREFERENCE_ACTION_QUEUE_KEY_PREFIX = 'preference_action_queue_'
+const LEFT_SIDEBAR_WIDTH_KEY = 'left_sidebar_width'
+const RIGHT_SIDEBAR_WIDTH_KEY = 'right_sidebar_width'
+const SOCKET_SERVER_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1').replace(/\/api\/v1\/?$/, '')
 
 const Icon = ({ children, className = 'h-4 w-4' }) => (
   <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
@@ -41,6 +45,22 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('')
   const [activeArtist, setActiveArtist] = useState('')
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
+  const [leftSidebarWidth, setLeftSidebarWidth] = useState(() => {
+    const saved = Number(localStorage.getItem(LEFT_SIDEBAR_WIDTH_KEY))
+    if (Number.isFinite(saved) && saved >= 260 && saved <= 460) {
+      return saved
+    }
+
+    return 320
+  })
+  const [rightSidebarWidth, setRightSidebarWidth] = useState(() => {
+    const saved = Number(localStorage.getItem(RIGHT_SIDEBAR_WIDTH_KEY))
+    if (Number.isFinite(saved) && saved >= 280 && saved <= 520) {
+      return saved
+    }
+
+    return 360
+  })
   const [likedSongIds, setLikedSongIds] = useState([])
   const [recentTrackIds, setRecentTrackIds] = useState([])
   const [queuedTrackIds, setQueuedTrackIds] = useState([])
@@ -67,6 +87,11 @@ function App() {
   const isHydratingPreferencesRef = useRef(false)
   const pendingPreferenceActionsRef = useRef([])
   const isFlushingPreferenceActionsRef = useRef(false)
+  const appSocketRef = useRef(null)
+  const [isAppSocketConnected, setIsAppSocketConnected] = useState(false)
+
+  const clampLeftSidebarWidth = (value) => Math.min(460, Math.max(260, Math.round(value)))
+  const clampRightSidebarWidth = (value) => Math.min(520, Math.max(280, Math.round(value)))
 
   useEffect(() => {
     const autoCollapseOnNarrowScreen = () => {
@@ -670,6 +695,120 @@ function App() {
   }, [currentUser?.id, accessToken])
 
   useEffect(() => {
+    if (!currentUser || !accessToken) {
+      if (appSocketRef.current) {
+        appSocketRef.current.disconnect()
+        appSocketRef.current = null
+      }
+
+      setIsAppSocketConnected(false)
+      return
+    }
+
+    const socket = io(SOCKET_SERVER_URL, {
+      transports: ['websocket', 'polling'],
+      withCredentials: true,
+      auth: {
+        token: accessToken,
+      },
+    })
+
+    appSocketRef.current = socket
+
+    const handleConnect = () => {
+      setIsAppSocketConnected(true)
+    }
+
+    const handleDisconnect = () => {
+      setIsAppSocketConnected(false)
+    }
+
+    socket.on('connect', handleConnect)
+    socket.on('disconnect', handleDisconnect)
+
+    return () => {
+      socket.off('connect', handleConnect)
+      socket.off('disconnect', handleDisconnect)
+      socket.disconnect()
+      appSocketRef.current = null
+      setIsAppSocketConnected(false)
+    }
+  }, [currentUser?.id, accessToken])
+
+  useEffect(() => {
+    const socket = appSocketRef.current
+    if (!socket || !isAppSocketConnected) {
+      return
+    }
+
+    if (!highlightedSong?._id || !isPlaying) {
+      socket.emit('presence:activity', { isPlaying: false })
+      return
+    }
+
+    socket.emit('presence:activity', {
+      songId: highlightedSong._id,
+      title: highlightedSong.title,
+      artist: highlightedSong.artist,
+      coverUrl: highlightedSong.coverUrl || '',
+      isPlaying: true,
+    })
+  }, [isAppSocketConnected, highlightedSong?._id, highlightedSong?.title, highlightedSong?.artist, highlightedSong?.coverUrl, isPlaying])
+
+  const handleLeftSidebarResizeStart = (event) => {
+    if (window.innerWidth < MOBILE_LAYOUT_BREAKPOINT) {
+      return
+    }
+
+    event.preventDefault()
+    const startX = event.clientX
+    const startWidth = isLeftSidebarCollapsed ? 320 : leftSidebarWidth
+
+    const handlePointerMove = (moveEvent) => {
+      const next = clampLeftSidebarWidth(startWidth + (moveEvent.clientX - startX))
+      setLeftSidebarWidth(next)
+      localStorage.setItem(LEFT_SIDEBAR_WIDTH_KEY, String(next))
+
+      if (isLeftSidebarCollapsed) {
+        setIsLeftSidebarCollapsed(false)
+        localStorage.setItem(LEFT_SIDEBAR_COLLAPSED_KEY, '0')
+      }
+    }
+
+    const handlePointerUp = () => {
+      window.removeEventListener('pointermove', handlePointerMove)
+      window.removeEventListener('pointerup', handlePointerUp)
+    }
+
+    window.addEventListener('pointermove', handlePointerMove)
+    window.addEventListener('pointerup', handlePointerUp)
+  }
+
+  const handleRightSidebarResizeStart = (event) => {
+    if (window.innerWidth < TABLET_AUTO_COLLAPSE_BREAKPOINT) {
+      return
+    }
+
+    event.preventDefault()
+    const startX = event.clientX
+    const startWidth = rightSidebarWidth
+
+    const handlePointerMove = (moveEvent) => {
+      const next = clampRightSidebarWidth(startWidth - (moveEvent.clientX - startX))
+      setRightSidebarWidth(next)
+      localStorage.setItem(RIGHT_SIDEBAR_WIDTH_KEY, String(next))
+    }
+
+    const handlePointerUp = () => {
+      window.removeEventListener('pointermove', handlePointerMove)
+      window.removeEventListener('pointerup', handlePointerUp)
+    }
+
+    window.addEventListener('pointermove', handlePointerMove)
+    window.addEventListener('pointerup', handlePointerUp)
+  }
+
+  useEffect(() => {
     if (!currentTrackId) {
       return
     }
@@ -1230,6 +1369,8 @@ function App() {
   return (
     <AppShell
       isLeftSidebarCollapsed={isLeftSidebarCollapsed}
+      leftSidebarWidth={leftSidebarWidth}
+      rightSidebarWidth={rightSidebarWidth}
       isMobileSidebarOpen={isMobileSidebarOpen}
       onCloseMobileSidebar={() => setIsMobileSidebarOpen(false)}
       mobileBottomNav={(
@@ -1282,6 +1423,7 @@ function App() {
           onOpenMessages={handleOpenMessages}
           isCollapsed={isLeftSidebarCollapsed}
           onToggleCollapse={handleToggleLeftSidebar}
+          onResizeStart={handleLeftSidebarResizeStart}
         />
       )}
 
@@ -1540,6 +1682,7 @@ function App() {
           removeSongFromQueueAt={removeSongFromQueueAt}
           moveSongInQueue={moveSongInQueue}
           clearQueue={clearQueue}
+          onResizeStart={handleRightSidebarResizeStart}
         />
       )}
       audioNode={(

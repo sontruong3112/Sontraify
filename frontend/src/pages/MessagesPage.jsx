@@ -52,6 +52,7 @@ const sortMessagesByTime = (items) => {
 function MessagesPage({ currentUser, accessToken, onOpenLogin = () => {} }) {
   const [friends, setFriends] = useState([])
   const [friendPresenceMap, setFriendPresenceMap] = useState({})
+  const [friendActivityMap, setFriendActivityMap] = useState({})
   const [incomingRequests, setIncomingRequests] = useState([])
   const [outgoingRequests, setOutgoingRequests] = useState([])
   const [userSearchKeyword, setUserSearchKeyword] = useState('')
@@ -76,6 +77,7 @@ function MessagesPage({ currentUser, accessToken, onOpenLogin = () => {} }) {
   }, [friends, selectedFriendId])
 
   const selectedFriendOnline = Boolean(friendPresenceMap[selectedFriendId])
+  const selectedFriendActivity = friendActivityMap[selectedFriendId] || null
 
   useEffect(() => {
     selectedFriendIdRef.current = selectedFriendId
@@ -169,6 +171,12 @@ function MessagesPage({ currentUser, accessToken, onOpenLogin = () => {} }) {
       setFriendPresenceMap(
         nextFriends.reduce((accumulator, friend) => {
           accumulator[friend.id] = Boolean(friend.isOnline)
+          return accumulator
+        }, {})
+      )
+      setFriendActivityMap(
+        nextFriends.reduce((accumulator, friend) => {
+          accumulator[friend.id] = friend.listeningNow || null
           return accumulator
         }, {})
       )
@@ -302,6 +310,18 @@ function MessagesPage({ currentUser, accessToken, onOpenLogin = () => {} }) {
       }))
     }
 
+    const handleActivityUpdate = (payload) => {
+      const userId = String(payload?.userId || '')
+      if (!userId) {
+        return
+      }
+
+      setFriendActivityMap((prev) => ({
+        ...prev,
+        [userId]: payload?.activity || null,
+      }))
+    }
+
     const handleIncomingMessage = (incomingMessage) => {
       const viewerId = currentUserIdRef.current
       const activeFriendId = selectedFriendIdRef.current
@@ -353,6 +373,7 @@ function MessagesPage({ currentUser, accessToken, onOpenLogin = () => {} }) {
     socket.on('connect', handleConnect)
     socket.on('disconnect', handleDisconnect)
     socket.on('presence:update', handlePresenceUpdate)
+    socket.on('presence:activity', handleActivityUpdate)
     socket.on('chat:message', handleIncomingMessage)
     socket.on('chat:seen', handleSeenUpdate)
 
@@ -360,6 +381,7 @@ function MessagesPage({ currentUser, accessToken, onOpenLogin = () => {} }) {
       socket.off('connect', handleConnect)
       socket.off('disconnect', handleDisconnect)
       socket.off('presence:update', handlePresenceUpdate)
+      socket.off('presence:activity', handleActivityUpdate)
       socket.off('chat:message', handleIncomingMessage)
       socket.off('chat:seen', handleSeenUpdate)
       socket.disconnect()
@@ -675,6 +697,11 @@ function MessagesPage({ currentUser, accessToken, onOpenLogin = () => {} }) {
                   <span className="text-[10px] text-zinc-300">{friendPresenceMap[friend.id] ? 'Online' : 'Offline'}</span>
                   {outgoingRequests.some((item) => item.id === friend.id) ? <span className="inline-flex rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-300">Pending</span> : null}
                 </div>
+                {friendActivityMap[friend.id]?.isPlaying ? (
+                  <p className="mt-1 truncate text-[10px] text-green-300">
+                    Dang nghe: {friendActivityMap[friend.id].title} - {friendActivityMap[friend.id].artist}
+                  </p>
+                ) : null}
               </button>
             ))}
           </div>
@@ -696,6 +723,11 @@ function MessagesPage({ currentUser, accessToken, onOpenLogin = () => {} }) {
                 {selectedFriend ? selectedFriend.name : 'Select a friend to chat'}
               </h2>
               <p className="truncate text-xs text-zinc-400">{selectedFriend ? `${selectedFriend.email} • ${selectedFriendOnline ? 'Đang online' : 'Đang offline'}` : 'Bạn hãy chọn một người bên trái.'}</p>
+              {selectedFriend && selectedFriendActivity?.isPlaying ? (
+                <p className="truncate text-xs text-green-300">
+                  Dang nghe: {selectedFriendActivity.title} - {selectedFriendActivity.artist}
+                </p>
+              ) : null}
             </div>
           </div>
           <span className="hidden rounded-full bg-white/10 px-2 py-1 text-[10px] uppercase tracking-[0.15em] text-zinc-300 sm:inline-flex">Secure Chat</span>

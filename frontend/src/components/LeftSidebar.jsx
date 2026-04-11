@@ -17,6 +17,7 @@ function LeftSidebar({
   playTrackById,
   isCollapsed = false,
   onToggleCollapse = () => {},
+  onResizeStart = () => {},
   hoverFlyoutEnabled = true,
   likedSongsCount = 0,
   onOpenMessages = () => {},
@@ -89,8 +90,9 @@ function LeftSidebar({
       <button
         type="button"
         onDoubleClick={onToggleCollapse}
+        onPointerDown={onResizeStart}
         className="absolute top-2 right-0 hidden h-[calc(100%-16px)] w-1 translate-x-1/2 cursor-col-resize rounded-full bg-transparent xl:block"
-        title="Double click để thu gọn/mở rộng sidebar"
+        title="Kéo để đổi độ rộng sidebar, double click để thu gọn/mở rộng"
         aria-label="Resize sidebar"
       />
 

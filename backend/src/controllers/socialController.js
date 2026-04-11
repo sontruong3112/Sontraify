@@ -4,6 +4,7 @@ import { User } from "../models/User.js";
 import {
   emitConversationSeen,
   emitRealtimeMessage,
+  getUserActivity,
   isUserOnline,
 } from "../services/realtimeSocket.js";
 import { fail, ok } from "../utils/apiResponse.js";
@@ -236,6 +237,7 @@ export const getFriends = asyncHandler(async (req, res) => {
     .map((friend) => ({
       ...toPublicUser(friend),
       isOnline: isUserOnline(friend._id.toString()),
+      listeningNow: getUserActivity(friend._id.toString()),
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
 

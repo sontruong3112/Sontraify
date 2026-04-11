@@ -5,6 +5,7 @@ import { User } from "../models/User.js";
 
 let ioInstance = null;
 const connectedUsers = new Map();
+const userActivities = new Map();
 
 const normalizeOrigin = (value = "") => String(value).trim().replace(/\/$/, "");
 
@@ -87,6 +88,23 @@ export const initRealtimeSocket = (httpServer) => {
       socket.join(`chat:${roomId}`);
     });
 
+    socket.on("presence:activity", (payload = {}) => {
+      if (!userId) {
+        return;
+      }
+
+      const nextActivity = normalizeUserActivityPayload(payload);
+
+      if (!nextActivity) {
+        userActivities.delete(userId);
+        emitActivityUpdateToFriends(userId, null);
+        return;
+      }
+
+      userActivities.set(userId, nextActivity);
+      emitActivityUpdateToFriends(userId, nextActivity);
+    });
+
     socket.on("disconnect", () => {
       if (userId) {
         markUserConnection(userId, false);
@@ -136,6 +154,15 @@ export const isUserOnline = (userId) => {
   return (connectedUsers.get(key) || 0) > 0;
 };
 
+export const getUserActivity = (userId) => {
+  const key = String(userId || "").trim();
+  if (!key) {
+    return null;
+  }
+
+  return userActivities.get(key) || null;
+};
+
 const markUserConnection = async (userId, isConnected) => {
   const currentCount = connectedUsers.get(userId) || 0;
   const nextCount = isConnected ? currentCount + 1 : Math.max(0, currentCount - 1);
@@ -171,6 +198,45 @@ const emitPresenceUpdateToFriends = async (userId, isOnline) => {
       userId,
       isOnline,
       at: new Date().toISOString(),
+    });
+  });
+};
+
+const normalizeUserActivityPayload = (payload = {}) => {
+  const songId = String(payload.songId || "").trim();
+  const title = String(payload.title || "").trim();
+  const artist = String(payload.artist || "").trim();
+  const coverUrl = String(payload.coverUrl || "").trim();
+  const isPlaying = Boolean(payload.isPlaying);
+
+  if (!songId || !title || !artist || !isPlaying) {
+    return null;
+  }
+
+  return {
+    songId,
+    title,
+    artist,
+    coverUrl,
+    isPlaying: true,
+    at: new Date().toISOString(),
+  };
+};
+
+const emitActivityUpdateToFriends = async (userId, activity) => {
+  if (!ioInstance) {
+    return;
+  }
+
+  const user = await User.findById(userId).select("friendIds");
+  const friendIds = Array.isArray(user?.friendIds)
+    ? user.friendIds.map((item) => item.toString())
+    : [];
+
+  friendIds.forEach((friendId) => {
+    ioInstance.to(`user:${friendId}`).emit("presence:activity", {
+      userId,
+      activity,
     });
   });
 };

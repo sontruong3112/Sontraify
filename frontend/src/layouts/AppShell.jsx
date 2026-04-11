@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 
 function AppShell({
   leftSidebar,
@@ -7,17 +7,53 @@ function AppShell({
   audioNode,
   footerNode,
   isLeftSidebarCollapsed = false,
+  leftSidebarWidth = 320,
+  rightSidebarWidth = 360,
   isMobileSidebarOpen = false,
   onCloseMobileSidebar = () => {},
   mobileBottomNav,
 }) {
-  const desktopGridClassName = isLeftSidebarCollapsed
-    ? 'xl:grid-cols-[96px_1fr] 2xl:grid-cols-[96px_1fr_360px]'
-    : 'xl:grid-cols-[320px_1fr] 2xl:grid-cols-[320px_1fr_360px]'
+  const collapsedWidth = 96
+  const leftWidth = isLeftSidebarCollapsed ? collapsedWidth : leftSidebarWidth
+  const [isXlDesktop, setIsXlDesktop] = useState(() => (typeof window !== 'undefined' ? window.innerWidth >= 1280 : false))
+  const [is2XlDesktop, setIs2XlDesktop] = useState(() => (typeof window !== 'undefined' ? window.innerWidth >= 1536 : false))
+
+  useEffect(() => {
+    const updateLayoutBreakpoints = () => {
+      setIsXlDesktop(window.innerWidth >= 1280)
+      setIs2XlDesktop(window.innerWidth >= 1536)
+    }
+
+    updateLayoutBreakpoints()
+    window.addEventListener('resize', updateLayoutBreakpoints)
+
+    return () => {
+      window.removeEventListener('resize', updateLayoutBreakpoints)
+    }
+  }, [])
+
+  const desktopGridStyle = useMemo(() => {
+    if (!isXlDesktop) {
+      return undefined
+    }
+
+    if (is2XlDesktop) {
+      return {
+        gridTemplateColumns: `${leftWidth}px minmax(0, 1fr) ${rightSidebarWidth}px`,
+      }
+    }
+
+    return {
+      gridTemplateColumns: `${leftWidth}px minmax(0, 1fr)`,
+    }
+  }, [isXlDesktop, is2XlDesktop, leftWidth, rightSidebarWidth])
 
   return (
     <div className="smooth-ui min-h-screen bg-black text-white">
-      <div className={`grid min-h-screen grid-cols-1 gap-2 p-2 pb-24 ${desktopGridClassName} transition-[grid-template-columns] duration-300 ease-in-out`}>
+      <div
+        className="grid min-h-screen grid-cols-1 gap-2 p-2 pb-24 transition-[grid-template-columns] duration-300 ease-in-out"
+        style={desktopGridStyle}
+      >
         <div className="hidden xl:block">
           {leftSidebar}
         </div>
@@ -30,7 +66,10 @@ function AppShell({
           {rightSidebar}
         </div>
 
-        <div className="hidden 2xl:block">
+        <div
+          className="hidden 2xl:block"
+          style={{ width: `${rightSidebarWidth}px` }}
+        >
           {rightSidebar}
         </div>
       </div>
