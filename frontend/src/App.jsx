@@ -1405,7 +1405,6 @@ function App() {
       )}
       leftSidebar={(
         <LeftSidebar
-          Icon={Icon}
           handleGoHome={handleGoHome}
           currentUser={currentUser}
           handleCreatePlaylist={handleCreatePlaylistWithAuth}

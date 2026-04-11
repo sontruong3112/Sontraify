@@ -1,7 +1,6 @@
 ﻿import React, { useEffect, useRef, useState } from 'react'
 
 function LeftSidebar({
-  Icon,
   handleGoHome,
   currentUser,
   handleCreatePlaylist,
@@ -116,11 +115,11 @@ function LeftSidebar({
             className="rounded-full bg-zinc-800 p-2 text-zinc-200 hover:bg-zinc-700"
             title={isCollapsed ? 'Ghim mở rộng sidebar' : 'Thu gọn sidebar'}
           >
-            <Icon className="h-3 w-3">
+            <svg viewBox="0 0 24 24" fill="currentColor" className="h-3 w-3" aria-hidden="true">
               {effectiveCollapsed
                 ? <path d="M9 6l6 6-6 6" />
                 : <path d="M15 6l-6 6 6 6" />}
-            </Icon>
+            </svg>
           </button>
         </div>
 
@@ -130,7 +129,7 @@ function LeftSidebar({
           className={`group relative mb-2 flex w-full items-center rounded-md px-3 py-2 text-sm font-semibold ${effectiveCollapsed ? 'justify-center bg-transparent' : 'gap-3 bg-white/8'}`}
           title="Home"
         >
-          <Icon><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></Icon>
+          <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4" aria-hidden="true"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
           <span className={`overflow-hidden whitespace-nowrap transition-all duration-300 ease-in-out ${textRevealClass}`}>
             Home
           </span>
@@ -147,7 +146,7 @@ function LeftSidebar({
           className={`group relative flex w-full items-center rounded-md px-3 py-2 text-sm text-zinc-300 hover:bg-white/8 ${effectiveCollapsed ? 'justify-center' : 'gap-3'}`}
           title="Messages"
         >
-          <Icon><path d="M4 5h16a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V7a2 2 0 012-2zm0 2v.5l8 5 8-5V7H4zm16 10V9.85l-7.47 4.67a1 1 0 01-1.06 0L4 9.85V17h16z"/></Icon>
+          <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4" aria-hidden="true"><path d="M4 5h16a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V7a2 2 0 012-2zm0 2v.5l8 5 8-5V7H4zm16 10V9.85l-7.47 4.67a1 1 0 01-1.06 0L4 9.85V17h16z"/></svg>
           <span className={`overflow-hidden whitespace-nowrap transition-all duration-300 ease-in-out ${textRevealClass}`}>
             Messages
           </span>
