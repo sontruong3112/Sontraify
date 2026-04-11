@@ -479,6 +479,75 @@ export const uploadsApi = {
   },
 };
 
+export const artistsApi = {
+  list: () => {
+    return apiRequest({
+      endpoint: "/artists",
+    });
+  },
+
+  getByIdOrSlug: (idOrSlug) => {
+    return apiRequest({
+      endpoint: `/artists/${idOrSlug}`,
+    });
+  },
+
+  create: (tokenOrPayload, payloadMaybe) => {
+    const { token, payload } = resolveTokenPayload(tokenOrPayload, payloadMaybe);
+
+    return apiRequest({
+      endpoint: "/artists",
+      method: "POST",
+      token,
+      body: payload,
+      requiresAuth: true,
+    });
+  },
+
+  createAlbum: (tokenOrArtistId, artistIdOrPayload, payloadMaybe) => {
+    const { token, id, payload } = resolveTokenIdPayload(
+      tokenOrArtistId,
+      artistIdOrPayload,
+      payloadMaybe
+    );
+
+    return apiRequest({
+      endpoint: `/artists/${id}/albums`,
+      method: "POST",
+      token,
+      body: payload,
+      requiresAuth: true,
+    });
+  },
+
+  addSongToAlbum: (tokenOrArtistId, artistIdOrAlbumId, albumIdOrSongId, songIdMaybe) => {
+    let token;
+    let artistId;
+    let albumId;
+    let songId;
+
+    if (songIdMaybe === undefined) {
+      token = undefined;
+      artistId = tokenOrArtistId;
+      albumId = artistIdOrAlbumId;
+      songId = albumIdOrSongId;
+    } else {
+      token = tokenOrArtistId;
+      artistId = artistIdOrAlbumId;
+      albumId = albumIdOrSongId;
+      songId = songIdMaybe;
+    }
+
+    return apiRequest({
+      endpoint: `/artists/${artistId}/albums/${albumId}/songs`,
+      method: "POST",
+      token,
+      body: { songId },
+      requiresAuth: true,
+    });
+  },
+};
+
 export const socialApi = {
   searchUsers: (token, query = "") => {
     const search = new URLSearchParams();

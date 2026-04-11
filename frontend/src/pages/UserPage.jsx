@@ -26,9 +26,12 @@ function UserPage({
   addSongToQueueNext = () => {},
   addSongToQueueLast = () => {},
   onOpenArtistRadio = () => {},
+  onOpenArtistPage = () => {},
   onClearArtistRadio = () => {},
   activeArtist = '',
   artistRadioSongs = [],
+  artistLibrary = [],
+  artistLibraryLoading = false,
   onShowToast = () => {},
   searchQuery,
 }) {
@@ -257,6 +260,35 @@ function UserPage({
 
           <section className="mb-8">
             <div className="mb-3 flex items-end justify-between">
+              <h2 className="type-display-title">Artists</h2>
+            </div>
+
+            {artistLibraryLoading ? (
+              <p className="rounded-md bg-zinc-900 px-3 py-2 text-sm text-zinc-400">Loading artists...</p>
+            ) : artistLibrary.length === 0 ? (
+              <p className="rounded-md bg-zinc-900 px-3 py-2 text-sm text-zinc-400">No artist profiles available yet.</p>
+            ) : (
+              <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+                {artistLibrary.map((artist) => (
+                  <button
+                    type="button"
+                    key={`artist-card-${artist.id}`}
+                    onClick={() => onOpenArtistPage(artist.id || artist.slug)}
+                    className="rounded-lg bg-[#181818] p-2 text-left hover:bg-[#232323]"
+                  >
+                    <div className="mb-2 aspect-square overflow-hidden rounded-md bg-zinc-800">
+                      {artist.avatarUrl ? <img src={artist.avatarUrl} alt={artist.name} className="h-full w-full object-cover" /> : null}
+                    </div>
+                    <p className="truncate text-sm font-semibold text-zinc-100">{artist.name}</p>
+                    <p className="truncate text-[11px] text-zinc-400">{Array.isArray(artist.albums) ? artist.albums.length : 0} albums</p>
+                  </button>
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section className="mb-8">
+            <div className="mb-3 flex items-end justify-between">
               <h2 className="type-display-title">Recommended Stations</h2>
               <button type="button" className="type-button-sm text-zinc-400 hover:underline">Show all</button>
             </div>
@@ -340,7 +372,7 @@ function UserPage({
               ) : (
                 <div className="space-y-2">
                   {selectedPlaylist.songs.map((song) => (
-                    <div key={`${selectedPlaylist._id}-${song._id}`} className="flex items-center justify-between gap-3 rounded-md bg-[#181818] px-3 py-2">
+                    <div key={`${selectedPlaylist._id}-${song._id}`} className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-[#181818] px-3 py-2 sm:flex-nowrap sm:gap-3">
                       <button type="button" onClick={() => playTrackById(song._id)} onContextMenu={(event) => openSongContextMenu(event, song)} className="flex min-w-0 items-center gap-3 text-left">
                         <div className="h-10 w-10 overflow-hidden rounded bg-zinc-800">
                           {song.coverUrl ? <img src={song.coverUrl} alt={song.title} className="h-full w-full object-cover" /> : null}
@@ -365,7 +397,7 @@ function UserPage({
                       <button
                         type="button"
                         onClick={() => addSongToQueueNext(song._id)}
-                        className="type-button-sm rounded bg-zinc-800 px-2 py-1 text-zinc-300"
+                        className="type-button-sm hidden rounded bg-zinc-800 px-2 py-1 text-zinc-300 sm:inline-flex"
                       >
                         Next
                       </button>
@@ -373,7 +405,7 @@ function UserPage({
                       <button
                         type="button"
                         onClick={() => addSongToQueueLast(song._id)}
-                        className="type-button-sm rounded bg-zinc-800 px-2 py-1 text-zinc-300"
+                        className="type-button-sm hidden rounded bg-zinc-800 px-2 py-1 text-zinc-300 sm:inline-flex"
                       >
                         Queue
                       </button>

@@ -30,15 +30,31 @@ function AdminPage({
   onSendNotification = () => {},
   sendingNotification = false,
   currentUserId = '',
+  artistLibrary = [],
+  artistLibraryLoading = false,
+  artistLibraryError = '',
+  adminArtistForm = { name: '', bio: '', avatarUrl: '', bannerUrl: '' },
+  onAdminArtistInput = () => {},
+  onCreateArtist = () => {},
+  adminAlbumForm = { artistId: '', title: '', coverUrl: '', description: '', releaseDate: '' },
+  onAdminAlbumInput = () => {},
+  onCreateAlbum = () => {},
+  adminAlbumSongForm = { artistId: '', albumId: '', songId: '' },
+  onAdminAlbumSongInput = () => {},
+  onAddSongToAlbum = () => {},
+  artistMutationLoading = false,
 }) {
+  const selectedArtist = artistLibrary.find((artist) => artist.id === adminAlbumSongForm.artistId) || null
+  const selectedAlbums = Array.isArray(selectedArtist?.albums) ? selectedArtist.albums : []
+
   return (
     <div className="space-y-4">
       <section className="rounded-lg bg-[#181818] p-3">
         <h2 className="mb-3 text-lg font-semibold">Admin song manager</h2>
         <form className="grid gap-2 sm:grid-cols-2" onSubmit={handleCreateOrUpdateSong}>
-          <input name="title" value={adminSongForm.title} onChange={handleAdminSongInput} placeholder="Ten bài hát" className="rounded-md bg-zinc-900 px-3 py-2 text-sm" required />
-          <input name="artist" value={adminSongForm.artist} onChange={handleAdminSongInput} placeholder="Nghe si" className="rounded-md bg-zinc-900 px-3 py-2 text-sm" required />
-          <input name="genre" value={adminSongForm.genre} onChange={handleAdminSongInput} placeholder="The loai" className="rounded-md bg-zinc-900 px-3 py-2 text-sm" required />
+          <input name="title" value={adminSongForm.title} onChange={handleAdminSongInput} placeholder="Song title" className="rounded-md bg-zinc-900 px-3 py-2 text-sm" required />
+          <input name="artist" value={adminSongForm.artist} onChange={handleAdminSongInput} placeholder="Artist name" className="rounded-md bg-zinc-900 px-3 py-2 text-sm" required />
+          <input name="genre" value={adminSongForm.genre} onChange={handleAdminSongInput} placeholder="Genre" className="rounded-md bg-zinc-900 px-3 py-2 text-sm" required />
           <input name="audioUrl" value={adminSongForm.audioUrl} onChange={handleAdminSongInput} placeholder="Audio URL" className="rounded-md bg-zinc-900 px-3 py-2 text-sm" required />
           <input name="coverUrl" value={adminSongForm.coverUrl} onChange={handleAdminSongInput} placeholder="Cover URL" className="rounded-md bg-zinc-900 px-3 py-2 text-sm" />
           <div className="rounded-md bg-zinc-900 px-3 py-2 text-sm text-zinc-300">
@@ -48,7 +64,7 @@ function AdminPage({
               disabled={audioUploadLoading || songMutationLoading}
               className="type-button-sm w-full rounded-md bg-zinc-800 px-3 py-2 hover:bg-zinc-700 disabled:opacity-70"
             >
-              {audioUploadLoading ? 'Đang upload bài hát...' : 'Tải bài hát từ máy tính'}
+              {audioUploadLoading ? 'Uploading audio...' : 'Upload audio file'}
             </button>
             <input
               ref={audioFileInputRef}
@@ -66,7 +82,7 @@ function AdminPage({
               disabled={coverUploadLoading || songMutationLoading}
               className="type-button-sm w-full rounded-md bg-zinc-800 px-3 py-2 hover:bg-zinc-700 disabled:opacity-70"
             >
-              {coverUploadLoading ? 'Đang upload cover...' : 'Tải ảnh cover'}
+              {coverUploadLoading ? 'Uploading cover...' : 'Upload cover image'}
             </button>
             <input
               ref={coverFileInputRef}
@@ -79,10 +95,10 @@ function AdminPage({
           </div>
           <div className="sm:col-span-2 flex gap-2">
             <button type="submit" disabled={songMutationLoading} className="type-button-sm rounded-md bg-green-500 px-4 py-2 text-black">
-              {songMutationLoading ? 'Đang lưu...' : editingSongId ? 'Cập nhật bài hát' : 'Tạo bài hát'}
+              {songMutationLoading ? 'Saving...' : editingSongId ? 'Update song' : 'Create song'}
             </button>
             {editingSongId && (
-              <button type="button" onClick={resetAdminSongForm} className="type-button-sm rounded-md bg-zinc-800 px-4 py-2">Huy</button>
+              <button type="button" onClick={resetAdminSongForm} className="type-button-sm rounded-md bg-zinc-800 px-4 py-2">Cancel</button>
             )}
           </div>
         </form>
@@ -90,7 +106,7 @@ function AdminPage({
       </section>
 
       <section className="rounded-lg bg-[#181818] p-3">
-        <h2 className="mb-3 text-lg font-semibold">Danh sach bài hát</h2>
+        <h2 className="mb-3 text-lg font-semibold">Song list</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="type-table-head text-zinc-500">
@@ -122,7 +138,7 @@ function AdminPage({
 
       <section className="rounded-lg bg-[#181818] p-3">
         <div className="mb-3 flex items-center justify-between gap-2">
-          <h2 className="text-lg font-semibold">Quan ly nguoi dung</h2>
+          <h2 className="text-lg font-semibold">User management</h2>
           <button
             type="button"
             onClick={onRefreshAdminUsers}
@@ -132,7 +148,7 @@ function AdminPage({
           </button>
         </div>
 
-        {adminUsersLoading ? <p className="text-sm text-zinc-400">Dang tai danh sach user...</p> : null}
+        {adminUsersLoading ? <p className="text-sm text-zinc-400">Loading users...</p> : null}
         {adminUsersError ? <p className="mb-2 rounded-md bg-red-500/20 px-3 py-2 text-sm text-red-200">{adminUsersError}</p> : null}
 
         <div className="overflow-x-auto">
@@ -193,13 +209,13 @@ function AdminPage({
       </section>
 
       <section className="rounded-lg bg-[#181818] p-3">
-        <h2 className="mb-3 text-lg font-semibold">Gui thong bao</h2>
+        <h2 className="mb-3 text-lg font-semibold">Send notifications</h2>
         <div className="grid gap-2 sm:grid-cols-2">
           <input
             name="title"
             value={notificationForm.title}
             onChange={onNotificationFormChange}
-            placeholder="Tieu de thong bao"
+            placeholder="Notification title"
             className="rounded-md bg-zinc-900 px-3 py-2 text-sm"
           />
           <select
@@ -209,7 +225,7 @@ function AdminPage({
             disabled={notificationForm.sendToAll}
             className="rounded-md bg-zinc-900 px-3 py-2 text-sm"
           >
-            <option value="">Chon nguoi dung cu the</option>
+            <option value="">Select specific user</option>
             {adminUsers.map((user) => (
               <option key={`notify-${user.id}`} value={user.id}>{user.name} - {user.email}</option>
             ))}
@@ -218,7 +234,7 @@ function AdminPage({
             name="message"
             value={notificationForm.message}
             onChange={onNotificationFormChange}
-            placeholder="Noi dung thong bao"
+            placeholder="Notification message"
             className="sm:col-span-2 min-h-24 rounded-md bg-zinc-900 px-3 py-2 text-sm"
           />
           <label className="sm:col-span-2 inline-flex items-center gap-2 text-sm text-zinc-300">
@@ -228,7 +244,7 @@ function AdminPage({
               checked={notificationForm.sendToAll}
               onChange={onNotificationFormChange}
             />
-            Gui cho tat ca nguoi dung
+            Send to all users
           </label>
           <div className="sm:col-span-2">
             <button
@@ -237,9 +253,79 @@ function AdminPage({
               disabled={sendingNotification}
               className="type-button-sm rounded-md bg-blue-500 px-4 py-2 text-black disabled:opacity-70"
             >
-              {sendingNotification ? 'Dang gui...' : 'Gui thong bao'}
+              {sendingNotification ? 'Sending...' : 'Send notification'}
             </button>
           </div>
+        </div>
+      </section>
+
+      <section className="rounded-lg bg-[#181818] p-3">
+        <h2 className="mb-3 text-lg font-semibold">Artist and album manager</h2>
+
+        <div className="grid gap-3 lg:grid-cols-2">
+          <form className="space-y-2 rounded-md bg-zinc-900/50 p-3" onSubmit={onCreateArtist}>
+            <p className="text-sm font-semibold text-zinc-100">Create artist</p>
+            <input name="name" value={adminArtistForm.name} onChange={onAdminArtistInput} placeholder="Artist name" className="w-full rounded-md bg-zinc-900 px-3 py-2 text-sm" required />
+            <input name="avatarUrl" value={adminArtistForm.avatarUrl} onChange={onAdminArtistInput} placeholder="Avatar URL" className="w-full rounded-md bg-zinc-900 px-3 py-2 text-sm" />
+            <input name="bannerUrl" value={adminArtistForm.bannerUrl} onChange={onAdminArtistInput} placeholder="Banner URL" className="w-full rounded-md bg-zinc-900 px-3 py-2 text-sm" />
+            <textarea name="bio" value={adminArtistForm.bio} onChange={onAdminArtistInput} placeholder="Artist bio" className="min-h-20 w-full rounded-md bg-zinc-900 px-3 py-2 text-sm" />
+            <button type="submit" disabled={artistMutationLoading} className="type-button-sm rounded-md bg-green-500 px-4 py-2 text-black disabled:opacity-70">
+              {artistMutationLoading ? 'Saving...' : 'Create artist'}
+            </button>
+          </form>
+
+          <form className="space-y-2 rounded-md bg-zinc-900/50 p-3" onSubmit={onCreateAlbum}>
+            <p className="text-sm font-semibold text-zinc-100">Create album</p>
+            <select name="artistId" value={adminAlbumForm.artistId} onChange={onAdminAlbumInput} className="w-full rounded-md bg-zinc-900 px-3 py-2 text-sm" required>
+              <option value="">Select artist</option>
+              {artistLibrary.map((artist) => (
+                <option key={`artist-album-${artist.id}`} value={artist.id}>{artist.name}</option>
+              ))}
+            </select>
+            <input name="title" value={adminAlbumForm.title} onChange={onAdminAlbumInput} placeholder="Album title" className="w-full rounded-md bg-zinc-900 px-3 py-2 text-sm" required />
+            <input name="coverUrl" value={adminAlbumForm.coverUrl} onChange={onAdminAlbumInput} placeholder="Album cover URL" className="w-full rounded-md bg-zinc-900 px-3 py-2 text-sm" />
+            <input name="releaseDate" type="date" value={adminAlbumForm.releaseDate} onChange={onAdminAlbumInput} className="w-full rounded-md bg-zinc-900 px-3 py-2 text-sm" />
+            <textarea name="description" value={adminAlbumForm.description} onChange={onAdminAlbumInput} placeholder="Album description" className="min-h-20 w-full rounded-md bg-zinc-900 px-3 py-2 text-sm" />
+            <button type="submit" disabled={artistMutationLoading} className="type-button-sm rounded-md bg-cyan-500 px-4 py-2 text-black disabled:opacity-70">
+              {artistMutationLoading ? 'Saving...' : 'Create album'}
+            </button>
+          </form>
+        </div>
+
+        <form className="mt-3 grid gap-2 rounded-md bg-zinc-900/50 p-3 sm:grid-cols-4" onSubmit={onAddSongToAlbum}>
+          <select name="artistId" value={adminAlbumSongForm.artistId} onChange={onAdminAlbumSongInput} className="rounded-md bg-zinc-900 px-3 py-2 text-sm" required>
+            <option value="">Artist</option>
+            {artistLibrary.map((artist) => (
+              <option key={`assign-artist-${artist.id}`} value={artist.id}>{artist.name}</option>
+            ))}
+          </select>
+          <select name="albumId" value={adminAlbumSongForm.albumId} onChange={onAdminAlbumSongInput} className="rounded-md bg-zinc-900 px-3 py-2 text-sm" required>
+            <option value="">Album</option>
+            {selectedAlbums.map((album) => (
+              <option key={`assign-album-${album.id}`} value={album.id}>{album.title}</option>
+            ))}
+          </select>
+          <select name="songId" value={adminAlbumSongForm.songId} onChange={onAdminAlbumSongInput} className="rounded-md bg-zinc-900 px-3 py-2 text-sm" required>
+            <option value="">Song</option>
+            {songs.map((song) => (
+              <option key={`assign-song-${song._id}`} value={song._id}>{song.title} - {song.artist}</option>
+            ))}
+          </select>
+          <button type="submit" disabled={artistMutationLoading} className="type-button-sm rounded-md bg-amber-400 px-4 py-2 text-black disabled:opacity-70">
+            {artistMutationLoading ? 'Saving...' : 'Add song to album'}
+          </button>
+        </form>
+
+        {artistLibraryLoading ? <p className="mt-3 text-sm text-zinc-400">Loading artists...</p> : null}
+        {artistLibraryError ? <p className="mt-3 rounded-md bg-red-500/20 px-3 py-2 text-sm text-red-200">{artistLibraryError}</p> : null}
+
+        <div className="mt-3 space-y-2">
+          {artistLibrary.map((artist) => (
+            <div key={`artist-summary-${artist.id}`} className="rounded-md bg-zinc-900/60 px-3 py-2">
+              <p className="text-sm font-semibold text-zinc-100">{artist.name}</p>
+              <p className="text-xs text-zinc-400">{Array.isArray(artist.albums) ? artist.albums.length : 0} albums</p>
+            </div>
+          ))}
         </div>
       </section>
     </div>

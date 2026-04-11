@@ -2,8 +2,8 @@
 import { formatDuration } from '../utils/formatDuration'
 
 function ArtistPage({
-  artistName = '',
-  artistSongs = [],
+  artist = null,
+  artistLoading = false,
   playTrackById = () => {},
   currentTrackId = '',
   isPlaying = false,
@@ -14,11 +14,21 @@ function ArtistPage({
   toggleLikeSong = () => {},
   onBackToHome = () => {},
 }) {
-  const heroSong = artistSongs[0] || null
+  const albums = Array.isArray(artist?.albums) ? artist.albums : []
+  const allSongs = useMemo(() => albums.flatMap((album) => (Array.isArray(album.songs) ? album.songs : [])), [albums])
+  const heroSong = allSongs[0] || null
   const [sortMode, setSortMode] = useState('latest')
 
   const topTracks = useMemo(() => {
-    const list = [...artistSongs]
+    const songMap = new Map()
+
+    allSongs.forEach((song) => {
+      if (song?._id && !songMap.has(song._id)) {
+        songMap.set(song._id, song)
+      }
+    })
+
+    const list = Array.from(songMap.values())
 
     if (sortMode === 'title') {
       list.sort((a, b) => String(a?.title || '').localeCompare(String(b?.title || '')))
@@ -29,7 +39,7 @@ function ArtistPage({
     }
 
     return list.slice(0, 10)
-  }, [artistSongs, sortMode])
+  }, [allSongs, sortMode])
 
   return (
     <>
@@ -37,9 +47,9 @@ function ArtistPage({
         <p className="type-kicker text-zinc-200">Artist profile</p>
         <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="type-display-hero truncate">{artistName || 'Unknown Artist'}</h1>
+            <h1 className="type-display-hero truncate">{artist?.name || 'Unknown Artist'}</h1>
             <p className="type-body-muted mt-2 text-zinc-200/90">
-              {artistSongs.length} bài hát trong thư viện của nghệ sĩ này
+              {allSongs.length} tracks • {albums.length} albums
             </p>
           </div>
 
@@ -63,9 +73,11 @@ function ArtistPage({
         )}
       </section>
 
-      {!artistSongs.length ? (
+      {artistLoading ? <p className="rounded-md bg-zinc-900 px-3 py-2 text-sm text-zinc-400">Loading artist...</p> : null}
+
+      {!artistLoading && !allSongs.length ? (
         <p className="rounded-md bg-zinc-900 px-3 py-2 text-sm text-zinc-400">
-          Chưa có bài hát nào cho nghệ sĩ này.
+          No songs available for this artist yet.
         </p>
       ) : (
         <section className="mb-8">
@@ -92,7 +104,7 @@ function ArtistPage({
 
           <div className="space-y-2">
             {topTracks.map((song, index) => (
-              <div key={`artist-track-${song._id}`} className="group flex items-center gap-3 rounded-md bg-[#181818] px-3 py-2 hover:bg-[#232323]">
+              <div key={`artist-track-${song._id}`} className="group flex flex-wrap items-center gap-2 rounded-md bg-[#181818] px-3 py-2 hover:bg-[#232323] sm:flex-nowrap sm:gap-3">
                 <button
                   type="button"
                   onClick={(event) => {
@@ -146,14 +158,14 @@ function ArtistPage({
                 <button
                   type="button"
                   onClick={() => addSongToQueueNext(song._id)}
-                  className="type-button-sm rounded bg-zinc-800 px-2 py-1 text-zinc-200 hover:bg-zinc-700"
+                  className="type-button-sm hidden rounded bg-zinc-800 px-2 py-1 text-zinc-200 hover:bg-zinc-700 sm:inline-flex"
                 >
                   Next
                 </button>
                 <button
                   type="button"
                   onClick={() => addSongToQueueLast(song._id)}
-                  className="type-button-sm rounded bg-zinc-800 px-2 py-1 text-zinc-200 hover:bg-zinc-700"
+                  className="type-button-sm hidden rounded bg-zinc-800 px-2 py-1 text-zinc-200 hover:bg-zinc-700 sm:inline-flex"
                 >
                   Queue
                 </button>
@@ -165,6 +177,26 @@ function ArtistPage({
                   {isSongLiked(song._id) ? 'Liked' : 'Like'}
                 </button>
               </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {!artistLoading && albums.length > 0 && (
+        <section>
+          <div className="mb-3 flex items-end justify-between">
+            <h2 className="type-display-title">Albums</h2>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {albums.map((album) => (
+              <article key={`album-${album.id}`} className="rounded-lg bg-[#181818] p-3">
+                <div className="mb-2 aspect-video overflow-hidden rounded-md bg-zinc-800">
+                  {album.coverUrl ? <img src={album.coverUrl} alt={album.title} className="h-full w-full object-cover" /> : null}
+                </div>
+                <h3 className="truncate text-sm font-semibold text-zinc-100">{album.title}</h3>
+                <p className="mt-1 text-xs text-zinc-400">{Array.isArray(album.songs) ? album.songs.length : 0} tracks</p>
+              </article>
             ))}
           </div>
         </section>

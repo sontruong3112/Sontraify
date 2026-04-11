@@ -6,6 +6,7 @@ import morgan from "morgan";
 import { env } from "./config/env.js";
 import { errorHandler, notFoundHandler } from "./middlewares/errorMiddleware.js";
 import authRoutes from "./routes/authRoutes.js";
+import artistRoutes from "./routes/artistRoutes.js";
 import playlistRoutes from "./routes/playlistRoutes.js";
 import songRoutes from "./routes/songRoutes.js";
 import socialRoutes from "./routes/socialRoutes.js";
@@ -60,6 +61,7 @@ app.get("/health", (req, res) => {
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/songs", songRoutes);
+app.use("/api/v1/artists", artistRoutes);
 app.use("/api/v1/playlists", playlistRoutes);
 app.use("/api/v1/social", socialRoutes);
 app.use("/api/v1/uploads", uploadRoutes);

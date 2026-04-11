@@ -1,7 +1,7 @@
 ﻿import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { io } from 'socket.io-client'
-import { authApi, socialApi } from './api/client'
+import { artistsApi, authApi, socialApi } from './api/client'
 import { getInitialTrackId, useAudioPlayer } from './hooks/useAudioPlayer'
 import { useAuthSession } from './hooks/useAuthSession'
 import { useSongsLibrary } from './hooks/useSongsLibrary'
@@ -119,6 +119,31 @@ function App() {
   const [adminUsers, setAdminUsers] = useState([])
   const [adminUsersLoading, setAdminUsersLoading] = useState(false)
   const [adminUsersError, setAdminUsersError] = useState('')
+  const [artistLibrary, setArtistLibrary] = useState([])
+  const [artistLibraryLoading, setArtistLibraryLoading] = useState(false)
+  const [artistLibraryError, setArtistLibraryError] = useState('')
+  const [selectedArtistDetail, setSelectedArtistDetail] = useState(null)
+  const [selectedArtistLoading, setSelectedArtistLoading] = useState(false)
+  const [adminArtistForm, setAdminArtistForm] = useState({
+    name: '',
+    bio: '',
+    avatarUrl: '',
+    bannerUrl: '',
+  })
+  const [adminAlbumForm, setAdminAlbumForm] = useState({
+    artistId: '',
+    title: '',
+    coverUrl: '',
+    description: '',
+    releaseDate: '',
+  })
+  const [adminAlbumSongForm, setAdminAlbumSongForm] = useState({
+    artistId: '',
+    albumId: '',
+    songId: '',
+  })
+  const [artistMutationLoading, setArtistMutationLoading] = useState(false)
+  const [artistMutationError, setArtistMutationError] = useState('')
   const [notificationForm, setNotificationForm] = useState({
     title: '',
     message: '',
@@ -440,6 +465,141 @@ function App() {
     }
   }
 
+  const loadArtistsLibrary = async ({ silent = false } = {}) => {
+    try {
+      if (!silent) {
+        setArtistLibraryLoading(true)
+      }
+
+      setArtistLibraryError('')
+      const data = await artistsApi.list()
+      setArtistLibrary(Array.isArray(data?.artists) ? data.artists : [])
+    } catch (error) {
+      setArtistLibraryError(error?.message || 'Unable to load artists')
+    } finally {
+      if (!silent) {
+        setArtistLibraryLoading(false)
+      }
+    }
+  }
+
+  const handleAdminArtistInput = (event) => {
+    const { name, value } = event.target
+    setAdminArtistForm((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleAdminAlbumInput = (event) => {
+    const { name, value } = event.target
+    setAdminAlbumForm((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleAdminAlbumSongInput = (event) => {
+    const { name, value } = event.target
+    setAdminAlbumSongForm((prev) => {
+      const next = { ...prev, [name]: value }
+
+      if (name === 'artistId') {
+        next.albumId = ''
+      }
+
+      return next
+    })
+  }
+
+  const handleCreateArtistByAdmin = async (event) => {
+    event.preventDefault()
+
+    if (!accessToken || !isAdmin) {
+      return
+    }
+
+    const payload = {
+      name: adminArtistForm.name.trim(),
+      bio: adminArtistForm.bio.trim(),
+      avatarUrl: adminArtistForm.avatarUrl.trim(),
+      bannerUrl: adminArtistForm.bannerUrl.trim(),
+    }
+
+    if (!payload.name) {
+      setArtistMutationError('Artist name is required')
+      return
+    }
+
+    try {
+      setArtistMutationLoading(true)
+      setArtistMutationError('')
+      await artistsApi.create(accessToken, payload)
+      setAdminArtistForm({ name: '', bio: '', avatarUrl: '', bannerUrl: '' })
+      await loadArtistsLibrary({ silent: true })
+    } catch (error) {
+      setArtistMutationError(error?.message || 'Unable to create artist')
+    } finally {
+      setArtistMutationLoading(false)
+    }
+  }
+
+  const handleCreateAlbumByAdmin = async (event) => {
+    event.preventDefault()
+
+    if (!accessToken || !isAdmin) {
+      return
+    }
+
+    if (!adminAlbumForm.artistId || !adminAlbumForm.title.trim()) {
+      setArtistMutationError('Select artist and provide album title')
+      return
+    }
+
+    try {
+      setArtistMutationLoading(true)
+      setArtistMutationError('')
+      await artistsApi.createAlbum(accessToken, adminAlbumForm.artistId, {
+        title: adminAlbumForm.title.trim(),
+        coverUrl: adminAlbumForm.coverUrl.trim(),
+        description: adminAlbumForm.description.trim(),
+        releaseDate: adminAlbumForm.releaseDate || undefined,
+      })
+
+      setAdminAlbumForm((prev) => ({ ...prev, title: '', coverUrl: '', description: '', releaseDate: '' }))
+      await loadArtistsLibrary({ silent: true })
+    } catch (error) {
+      setArtistMutationError(error?.message || 'Unable to create album')
+    } finally {
+      setArtistMutationLoading(false)
+    }
+  }
+
+  const handleAddSongToAlbumByAdmin = async (event) => {
+    event.preventDefault()
+
+    if (!accessToken || !isAdmin) {
+      return
+    }
+
+    if (!adminAlbumSongForm.artistId || !adminAlbumSongForm.albumId || !adminAlbumSongForm.songId) {
+      setArtistMutationError('Select artist, album and song')
+      return
+    }
+
+    try {
+      setArtistMutationLoading(true)
+      setArtistMutationError('')
+      await artistsApi.addSongToAlbum(
+        accessToken,
+        adminAlbumSongForm.artistId,
+        adminAlbumSongForm.albumId,
+        adminAlbumSongForm.songId,
+      )
+
+      setAdminAlbumSongForm((prev) => ({ ...prev, songId: '' }))
+      await loadArtistsLibrary({ silent: true })
+    } catch (error) {
+      setArtistMutationError(error?.message || 'Unable to add song to album')
+    } finally {
+      setArtistMutationLoading(false)
+    }
+  }
+
   useEffect(() => {
     if (!isAdminRoute || !isAdmin || !accessToken) {
       return
@@ -447,6 +607,10 @@ function App() {
 
     loadAdminUsers()
   }, [isAdminRoute, isAdmin, accessToken])
+
+  useEffect(() => {
+    loadArtistsLibrary()
+  }, [])
 
   const handleChangeUserRole = async (userId, nextRole) => {
     if (!accessToken || !userId || !nextRole) {
@@ -824,20 +988,20 @@ function App() {
     }
   }, [currentUser?.id, accessToken])
 
-  const routeArtistName = useMemo(() => {
+  const routeArtistIdOrSlug = useMemo(() => {
     if (!isArtistRoute) {
       return ''
     }
 
-    const encodedName = location.pathname.replace('/artist/', '')
-    if (!encodedName) {
+    const encodedValue = location.pathname.replace('/artist/', '')
+    if (!encodedValue) {
       return ''
     }
 
     try {
-      return decodeURIComponent(encodedName)
+      return decodeURIComponent(encodedValue)
     } catch {
-      return encodedName
+      return encodedValue
     }
   }, [isArtistRoute, location.pathname])
 
@@ -920,28 +1084,39 @@ function App() {
 
   const recommendedSongs = useMemo(() => filteredSongs.slice(0, 10), [filteredSongs])
 
-  const artistRadioSongs = useMemo(() => {
-    const targetArtist = String(routeArtistName || activeArtist || '').trim().toLowerCase()
-
-    if (!targetArtist) {
-      return []
-    }
-
-    return songs
-      .filter((song) => String(song.artist || '').trim().toLowerCase() === targetArtist)
-      .slice(0, 20)
-  }, [songs, routeArtistName, activeArtist])
-
   useEffect(() => {
-    if (routeArtistName) {
-      setActiveArtist(routeArtistName)
+    if (!routeArtistIdOrSlug) {
+      setSelectedArtistDetail(null)
       return
     }
 
-    if (isArtistRoute) {
-      setActiveArtist('')
+    let disposed = false
+
+    const loadArtistDetail = async () => {
+      try {
+        setSelectedArtistLoading(true)
+        const data = await artistsApi.getByIdOrSlug(routeArtistIdOrSlug)
+
+        if (!disposed) {
+          setSelectedArtistDetail(data?.artist || null)
+        }
+      } catch {
+        if (!disposed) {
+          setSelectedArtistDetail(null)
+        }
+      } finally {
+        if (!disposed) {
+          setSelectedArtistLoading(false)
+        }
+      }
     }
-  }, [routeArtistName, isArtistRoute])
+
+    loadArtistDetail()
+
+    return () => {
+      disposed = true
+    }
+  }, [routeArtistIdOrSlug])
 
   const popularSongs = useMemo(() => {
     const section = filteredSongs.slice(5, 15)
@@ -1593,16 +1768,30 @@ function App() {
     navigate('/messages')
   }
 
-  const handleOpenArtistRadio = (artistName) => {
-    const value = String(artistName || '').trim()
+  const handleOpenArtistPage = (artistIdOrSlug) => {
+    const value = String(artistIdOrSlug || '').trim()
     if (!value) {
       return
     }
 
     navigate(`/artist/${encodeURIComponent(value)}`)
-    setActiveArtist(value)
     setSearchQuery('')
-    showPlayerToast(`Mở radio: ${value}`)
+    showPlayerToast('Artist page opened')
+  }
+
+  const handleOpenArtistRadio = (artistName) => {
+    const value = String(artistName || '').trim().toLowerCase()
+    if (!value) {
+      return
+    }
+
+    const match = artistLibrary.find((artist) => String(artist.name || '').trim().toLowerCase() === value)
+    if (match?.id || match?.slug) {
+      handleOpenArtistPage(match.id || match.slug)
+      return
+    }
+
+    showPlayerToast('Artist profile not available yet')
   }
 
   const handleOpenPlaylistPage = (playlistId) => {
@@ -1620,7 +1809,6 @@ function App() {
 
   const handleClearArtistRadio = () => {
     navigate('/')
-    setActiveArtist('')
   }
 
   const handleOpenAdmin = () => {
@@ -2208,12 +2396,25 @@ function App() {
                   onSendNotification={handleSendAdminNotification}
                   sendingNotification={sendingNotification}
                   currentUserId={currentUser?.id || ''}
+                  artistLibrary={artistLibrary}
+                  artistLibraryLoading={artistLibraryLoading}
+                  artistLibraryError={artistLibraryError || artistMutationError}
+                  adminArtistForm={adminArtistForm}
+                  onAdminArtistInput={handleAdminArtistInput}
+                  onCreateArtist={handleCreateArtistByAdmin}
+                  adminAlbumForm={adminAlbumForm}
+                  onAdminAlbumInput={handleAdminAlbumInput}
+                  onCreateAlbum={handleCreateAlbumByAdmin}
+                  adminAlbumSongForm={adminAlbumSongForm}
+                  onAdminAlbumSongInput={handleAdminAlbumSongInput}
+                  onAddSongToAlbum={handleAddSongToAlbumByAdmin}
+                  artistMutationLoading={artistMutationLoading}
                 />
               </ProtectedAdminRoute>
             ) : isArtistRoute ? (
               <ArtistPage
-                artistName={routeArtistName || activeArtist}
-                artistSongs={artistRadioSongs}
+                  artist={selectedArtistDetail}
+                  artistLoading={selectedArtistLoading}
                 playTrackById={playTrackById}
                 currentTrackId={currentTrackId}
                 isPlaying={isPlaying}
@@ -2275,9 +2476,10 @@ function App() {
                 addSongToQueueNext={addSongToQueueNext}
                 addSongToQueueLast={addSongToQueueLast}
                 onOpenArtistRadio={handleOpenArtistRadio}
+                onOpenArtistPage={handleOpenArtistPage}
                 onClearArtistRadio={handleClearArtistRadio}
-                activeArtist={routeArtistName || activeArtist}
-                artistRadioSongs={artistRadioSongs}
+                artistLibrary={artistLibrary}
+                artistLibraryLoading={artistLibraryLoading}
                 onShowToast={showPlayerToast}
                 searchQuery={searchQuery}
               />
