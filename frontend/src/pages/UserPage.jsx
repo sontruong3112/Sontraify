@@ -58,6 +58,39 @@ function UserPage({
         <>
           <section className="mb-8">
             <div className="mb-3 flex items-end justify-between">
+              <h2 className="type-display-title">Trending</h2>
+            </div>
+
+            {trendingSongsLoading ? (
+              <p className="rounded-md bg-zinc-900 px-3 py-2 text-sm text-zinc-400">Loading trending songs...</p>
+            ) : trendingSongs.length === 0 ? (
+              <p className="rounded-md bg-zinc-900 px-3 py-2 text-sm text-zinc-400">No trending data yet.</p>
+            ) : (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+                {trendingSongs.slice(0, 10).map((song) => (
+                  <article key={`trending-${song._id}`} className="rounded-lg bg-[#181818] p-2 text-left hover:bg-[#232323]">
+                    <button
+                      type="button"
+                      className="w-full text-left"
+                      onClick={() => playTrackById(song._id)}
+                    >
+                      <div className="relative mb-2 aspect-square overflow-hidden rounded-md bg-zinc-800">
+                        {song.coverUrl ? <img src={song.coverUrl} alt={song.title} className="h-full w-full object-cover" /> : null}
+                        <div className="absolute bottom-2 right-2">
+                          {renderSongPlayButton(song)}
+                        </div>
+                      </div>
+                      <p className="truncate text-sm font-semibold text-zinc-100">{song.title}</p>
+                      <p className="truncate text-[11px] text-zinc-400">{song.artist}</p>
+                    </button>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section className="mb-8">
+            <div className="mb-3 flex items-end justify-between">
               <h2 className="type-display-title">Artists</h2>
             </div>
 
@@ -157,44 +190,6 @@ function UserPage({
                 </article>
               ))}
             </div>
-          </section>
-
-          <section>
-            <div className="mb-3 flex items-end justify-between">
-              <h2 className="type-display-title">Trending</h2>
-              <p className="type-body-muted">Top 10 by listeners</p>
-            </div>
-
-            {trendingSongsLoading ? (
-              <p className="rounded-md bg-zinc-900 px-3 py-2 text-sm text-zinc-400">Loading trending songs...</p>
-            ) : trendingSongs.length === 0 ? (
-              <p className="rounded-md bg-zinc-900 px-3 py-2 text-sm text-zinc-400">No trending data yet.</p>
-            ) : (
-              <div className="space-y-2">
-                {trendingSongs.slice(0, 10).map((song, index) => (
-                  <div key={`trending-${song._id}`} className="flex items-center gap-3 rounded-md bg-[#181818] px-3 py-2 hover:bg-[#232323]">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-xs font-bold text-black">
-                      #{index + 1}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => playTrackById(song._id)}
-                      className="flex min-w-0 flex-1 items-center gap-3 text-left"
-                    >
-                      <div className="h-10 w-10 overflow-hidden rounded bg-zinc-800">
-                        {song.coverUrl ? <img src={song.coverUrl} alt={song.title} className="h-full w-full object-cover" /> : null}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-zinc-100">{song.title}</p>
-                        <p className="truncate text-xs text-zinc-400">{song.artist}</p>
-                      </div>
-                    </button>
-                    <p className="hidden text-xs text-zinc-500 sm:block">{Number(song.playCount) || 0} plays</p>
-                    {renderSongPlayButton(song)}
-                  </div>
-                ))}
-              </div>
-            )}
           </section>
 
           {searchQuery.trim() && recommendedSongs.length === 0 && (

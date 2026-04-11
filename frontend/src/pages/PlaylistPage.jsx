@@ -239,7 +239,7 @@ function PlaylistPage({
 
   return (
     <>
-      <section className="mb-8 overflow-hidden rounded-xl bg-linear-to-r from-violet-500/30 via-fuchsia-500/15 to-transparent p-5">
+      <section className="mb-8 overflow-visible rounded-xl bg-linear-to-r from-violet-500/30 via-fuchsia-500/15 to-transparent p-5">
         <p className="type-kicker text-zinc-300">Playlist</p>
         <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
           <div className="flex min-w-0 items-end gap-4">
@@ -342,6 +342,7 @@ function PlaylistPage({
                           onClick={() => {
                             setIsEditingName(true)
                             setIsEditingCover(false)
+                            setIsSettingsMenuOpen(false)
                           }}
                           className="w-full rounded-md bg-zinc-800 px-3 py-2 text-left text-sm text-zinc-100 hover:bg-zinc-700"
                         >
@@ -352,6 +353,7 @@ function PlaylistPage({
                           onClick={() => {
                             setIsEditingCover(true)
                             setIsEditingName(false)
+                            setIsSettingsMenuOpen(false)
                           }}
                           className="w-full rounded-md bg-zinc-800 px-3 py-2 text-left text-sm text-zinc-100 hover:bg-zinc-700"
                         >
