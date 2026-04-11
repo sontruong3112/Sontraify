@@ -11,7 +11,6 @@ function LeftSidebar({
   playlists,
   selectedPlaylistId = '',
   onSelectPlaylist = () => {},
-  handleDeletePlaylist,
   artists,
   playTrackById,
   isCollapsed = false,
@@ -179,7 +178,7 @@ function LeftSidebar({
                 <input
                   value={playlistName}
                   onChange={(event) => setPlaylistName(event.target.value)}
-                  placeholder="Tạo playlist"
+                  placeholder="Create playlist"
                   className="w-full rounded-md bg-zinc-900 px-3 py-2 text-xs"
                 />
                 <button
@@ -187,7 +186,7 @@ function LeftSidebar({
                   disabled={playlistActionLoadingId === 'create'}
                   className="type-button-sm rounded-md bg-white px-2 text-black"
                 >
-                  {playlistActionLoadingId === 'create' ? '...' : 'Tạo'}
+                  {playlistActionLoadingId === 'create' ? '...' : 'Create'}
                 </button>
               </form>
             )}
@@ -200,9 +199,9 @@ function LeftSidebar({
                 </div>
 
                 <div className="max-h-44 space-y-2 overflow-y-auto pr-1">
-                  {playlistLoading && <p className="text-xs text-zinc-500">Đang tải playlist...</p>}
+                  {playlistLoading && <p className="text-xs text-zinc-500">Loading playlists...</p>}
                   {!playlistLoading && playlists.length === 0 && (
-                    <p className="text-xs text-zinc-500">Chưa có playlist nào</p>
+                    <p className="text-xs text-zinc-500">No playlists yet</p>
                   )}
                   {playlists.map((playlist) => {
                     const songCount = Array.isArray(playlist.songs) ? playlist.songs.length : 0
@@ -229,17 +228,8 @@ function LeftSidebar({
                               <p className={`truncate text-sm font-semibold ${isSelected ? 'text-green-300' : 'text-zinc-100'}`}>
                                 {playlist.name}
                               </p>
-                              <p className="truncate text-[11px] text-zinc-400">{songCount} bài hát</p>
+                              <p className="truncate text-[11px] text-zinc-400">{songCount} tracks</p>
                             </div>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => handleDeletePlaylist(playlist._id)}
-                            disabled={playlistActionLoadingId === `delete-${playlist._id}`}
-                            className="type-button-sm rounded bg-zinc-800 px-1.5 py-0.5 hover:bg-zinc-700"
-                          >
-                            Xóa
                           </button>
                         </div>
                       </div>
@@ -255,7 +245,7 @@ function LeftSidebar({
                 </div>
 
                 {likedSongs.length === 0 ? (
-                  <p className="rounded-md bg-zinc-900/60 px-2 py-2 text-xs text-zinc-500">Chưa có bài hát yêu thích</p>
+                  <p className="rounded-md bg-zinc-900/60 px-2 py-2 text-xs text-zinc-500">No liked songs yet</p>
                 ) : (
                   <div className="max-h-44 space-y-2 overflow-y-auto pr-1">
                     {likedSongs.slice(0, 8).map((song) => {

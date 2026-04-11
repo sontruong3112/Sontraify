@@ -11,6 +11,7 @@ function PlaylistPage({
   handleRemoveSongFromPlaylist = () => {},
   handleMoveSongInPlaylist = () => {},
   handleDragReorderSongsInPlaylist = async () => true,
+  handleDeletePlaylist = () => {},
   handleRenamePlaylist = () => {},
   handleUpdatePlaylistCover = () => {},
   handleUploadPlaylistCover = async () => false,
@@ -33,7 +34,9 @@ function PlaylistPage({
   const [sortMode, setSortMode] = useState('manual')
   const [selectedSongIds, setSelectedSongIds] = useState([])
   const [lastSelectedDisplayIndex, setLastSelectedDisplayIndex] = useState(-1)
+  const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false)
   const coverFileInputRef = useRef(null)
+  const settingsMenuRef = useRef(null)
 
   const songs = Array.isArray(playlist?.songs) ? playlist.songs : []
 
@@ -85,6 +88,7 @@ function PlaylistPage({
 
     await handleRenamePlaylist(playlist._id, draftPlaylistName)
     setIsEditingName(false)
+    setIsSettingsMenuOpen(false)
   }
 
   const handleTrackDrop = async (fromIndex, toIndex) => {
@@ -110,6 +114,7 @@ function PlaylistPage({
 
     await handleUpdatePlaylistCover(playlist._id, draftCoverUrl)
     setIsEditingCover(false)
+    setIsSettingsMenuOpen(false)
   }
 
   const handleCoverFileChange = async (event) => {
@@ -122,8 +127,25 @@ function PlaylistPage({
 
     const success = await handleUploadPlaylistCover(playlist._id, file)
     if (success) {
-      onShowToast('Đã cập nhật ảnh cover playlist')
+      onShowToast('Playlist cover updated')
+      setIsSettingsMenuOpen(false)
     }
+  }
+
+  const handleDeleteCurrentPlaylist = async () => {
+    if (!playlist?._id) {
+      return
+    }
+
+    const shouldDelete = window.confirm('Delete this playlist? This action cannot be undone.')
+    if (!shouldDelete) {
+      return
+    }
+
+    await handleDeletePlaylist(playlist._id)
+    onShowToast('Playlist deleted')
+    setIsSettingsMenuOpen(false)
+    onBackToHome()
   }
 
   const isDragging = draggedSongIndex >= 0
@@ -193,10 +215,27 @@ function PlaylistPage({
       }
     })
 
-    onShowToast(`Đã thêm ${selectedSongIds.length} bài vào queue`)
+    onShowToast(`Added ${selectedSongIds.length} tracks to queue`)
     setSelectedSongIds([])
     setLastSelectedDisplayIndex(-1)
   }
+
+  useEffect(() => {
+    if (!isSettingsMenuOpen) {
+      return
+    }
+
+    const handlePointerDown = (event) => {
+      if (settingsMenuRef.current && !settingsMenuRef.current.contains(event.target)) {
+        setIsSettingsMenuOpen(false)
+      }
+    }
+
+    window.addEventListener('pointerdown', handlePointerDown)
+    return () => {
+      window.removeEventListener('pointerdown', handlePointerDown)
+    }
+  }, [isSettingsMenuOpen])
 
   return (
     <>
@@ -242,15 +281,6 @@ function PlaylistPage({
             ) : (
               <div className="flex items-center gap-2">
                 <h1 className="type-display-hero truncate">{playlist?.name || 'Unknown Playlist'}</h1>
-                {playlist && (
-                  <button
-                    type="button"
-                    onClick={() => setIsEditingName(true)}
-                    className="type-button-sm rounded-full bg-black/45 px-3 py-1 text-zinc-200 hover:bg-black/60"
-                  >
-                    Rename
-                  </button>
-                )}
               </div>
             )}
 
@@ -281,50 +311,95 @@ function PlaylistPage({
                   Cancel
                 </button>
               </div>
-            ) : (
-              <div className="mt-2 flex flex-wrap items-center gap-2">
+            ) : null}
+
+            <p className="type-body-muted mt-2 text-zinc-200/90">{songs.length} tracks</p>
+          </div>
+          </div>
+          <div className="flex items-center gap-2" ref={settingsMenuRef}>
+            {playlist && (
+              <div className="relative">
                 <button
                   type="button"
-                  onClick={() => setIsEditingCover(true)}
-                  className="type-button-sm rounded-full bg-black/45 px-3 py-1 text-zinc-200 hover:bg-black/60"
+                  onClick={() => setIsSettingsMenuOpen((prev) => !prev)}
+                  className="type-button-sm rounded-full bg-black/45 p-2 text-zinc-200 hover:bg-black/60"
+                  title="Playlist settings"
+                  aria-label="Playlist settings"
                 >
-                  Edit cover URL
+                  <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4" aria-hidden="true">
+                    <path d="M19.14 12.94a7.48 7.48 0 000-1.88l2.03-1.58a.5.5 0 00.12-.64l-1.92-3.32a.5.5 0 00-.6-.22l-2.39.96a7.62 7.62 0 00-1.62-.94l-.36-2.54A.5.5 0 0013.9 2h-3.8a.5.5 0 00-.49.42l-.36 2.54c-.57.23-1.11.54-1.62.94l-2.39-.96a.5.5 0 00-.6.22L2.72 8.48a.5.5 0 00.12.64l2.03 1.58a7.48 7.48 0 000 1.88l-2.03 1.58a.5.5 0 00-.12.64l1.92 3.32a.5.5 0 00.6.22l2.39-.96c.5.4 1.05.71 1.62.94l.36 2.54a.5.5 0 00.49.42h3.8a.5.5 0 00.49-.42l.36-2.54c.57-.23 1.11-.54 1.62-.94l2.39.96a.5.5 0 00.6-.22l1.92-3.32a.5.5 0 00-.12-.64l-2.03-1.58zM12 15.5A3.5 3.5 0 1112 8a3.5 3.5 0 010 7.5z"/>
+                  </svg>
                 </button>
-                <input
-                  ref={coverFileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleCoverFileChange}
-                  className="hidden"
-                />
-                <button
-                  type="button"
-                  disabled={playlistCoverUploadLoading}
-                  onClick={() => coverFileInputRef.current?.click()}
-                  className="type-button-sm rounded-full bg-green-500 px-3 py-1 text-black disabled:opacity-70"
-                >
-                  {playlistCoverUploadLoading ? 'Uploading...' : 'Upload cover'}
-                </button>
+
+                {isSettingsMenuOpen && (
+                  <div className="absolute right-0 z-20 mt-2 w-64 rounded-xl border border-white/10 bg-zinc-900 p-3 shadow-xl shadow-black/60">
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">Playlist settings</p>
+
+                    {!isEditingName && !isEditingCover && (
+                      <div className="space-y-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsEditingName(true)
+                            setIsEditingCover(false)
+                          }}
+                          className="w-full rounded-md bg-zinc-800 px-3 py-2 text-left text-sm text-zinc-100 hover:bg-zinc-700"
+                        >
+                          Rename playlist
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsEditingCover(true)
+                            setIsEditingName(false)
+                          }}
+                          className="w-full rounded-md bg-zinc-800 px-3 py-2 text-left text-sm text-zinc-100 hover:bg-zinc-700"
+                        >
+                          Edit cover URL
+                        </button>
+                        <input
+                          ref={coverFileInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleCoverFileChange}
+                          className="hidden"
+                        />
+                        <button
+                          type="button"
+                          disabled={playlistCoverUploadLoading}
+                          onClick={() => coverFileInputRef.current?.click()}
+                          className="w-full rounded-md bg-green-500 px-3 py-2 text-left text-sm font-semibold text-black disabled:opacity-70"
+                        >
+                          {playlistCoverUploadLoading ? 'Uploading cover...' : 'Upload cover image'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleDeleteCurrentPlaylist}
+                          className="w-full rounded-md bg-red-500/20 px-3 py-2 text-left text-sm font-semibold text-red-200 hover:bg-red-500/30"
+                        >
+                          Delete playlist
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
-
-            <p className="type-body-muted mt-2 text-zinc-200/90">{songs.length} bài hát</p>
+            <button
+              type="button"
+              onClick={onBackToHome}
+              className="type-button-sm rounded-full bg-black/45 px-4 py-2 text-zinc-200 hover:bg-black/60"
+            >
+              Back to home
+            </button>
           </div>
-          </div>
-          <button
-            type="button"
-            onClick={onBackToHome}
-            className="type-button-sm rounded-full bg-black/45 px-4 py-2 text-zinc-200 hover:bg-black/60"
-          >
-            Back to home
-          </button>
         </div>
       </section>
 
       {!playlist ? (
-        <p className="rounded-md bg-zinc-900 px-3 py-2 text-sm text-zinc-400">Không tìm thấy playlist này.</p>
+        <p className="rounded-md bg-zinc-900 px-3 py-2 text-sm text-zinc-400">Playlist not found.</p>
       ) : displayedSongs.length === 0 ? (
-        <p className="rounded-md bg-zinc-900 px-3 py-2 text-sm text-zinc-400">Playlist này chưa có bài hát.</p>
+        <p className="rounded-md bg-zinc-900 px-3 py-2 text-sm text-zinc-400">This playlist has no songs yet.</p>
       ) : (
         <section>
           <div className="mb-3 flex flex-wrap items-end justify-between gap-3">

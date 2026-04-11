@@ -1,7 +1,7 @@
 ﻿import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { io } from 'socket.io-client'
-import { authApi } from './api/client'
+import { authApi, socialApi } from './api/client'
 import { getInitialTrackId, useAudioPlayer } from './hooks/useAudioPlayer'
 import { useAuthSession } from './hooks/useAuthSession'
 import { useSongsLibrary } from './hooks/useSongsLibrary'
@@ -30,6 +30,40 @@ const PREFERENCE_ACTION_QUEUE_KEY_PREFIX = 'preference_action_queue_'
 const LEFT_SIDEBAR_WIDTH_KEY = 'left_sidebar_width'
 const RIGHT_SIDEBAR_WIDTH_KEY = 'right_sidebar_width'
 const SOCKET_SERVER_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1').replace(/\/api\/v1\/?$/, '')
+
+const getInitials = (value = '') => {
+  const words = String(value).trim().split(/\s+/).filter(Boolean)
+  if (words.length === 0) {
+    return '?'
+  }
+
+  if (words.length === 1) {
+    return words[0].slice(0, 1).toUpperCase()
+  }
+
+  return `${words[0].slice(0, 1)}${words[1].slice(0, 1)}`.toUpperCase()
+}
+
+const normalizeChatMessage = (message, { fallbackState = 'sent' } = {}) => {
+  if (!message) {
+    return null
+  }
+
+  return {
+    id: String(message.id || ''),
+    senderId: String(message.senderId || ''),
+    receiverId: String(message.receiverId || ''),
+    text: String(message.text || ''),
+    createdAt: message.createdAt || new Date().toISOString(),
+    seenAt: message.seenAt || null,
+    clientTempId: String(message.clientTempId || ''),
+    deliveryState: message.seenAt ? 'seen' : fallbackState,
+  }
+}
+
+const sortMessagesByTime = (items) => {
+  return [...items].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+}
 
 const Icon = ({ children, className = 'h-4 w-4' }) => (
   <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
@@ -69,6 +103,15 @@ function App() {
   const [syncStatus, setSyncStatus] = useState('idle')
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [isNotificationOpen, setIsNotificationOpen] = useState(false)
+  const [isChatListOpen, setIsChatListOpen] = useState(false)
+  const [chatFriends, setChatFriends] = useState([])
+  const [chatFriendsLoading, setChatFriendsLoading] = useState(false)
+  const [chatFriendsError, setChatFriendsError] = useState('')
+  const [activeMiniChatFriendId, setActiveMiniChatFriendId] = useState('')
+  const [miniChatMessages, setMiniChatMessages] = useState([])
+  const [miniChatDraft, setMiniChatDraft] = useState('')
+  const [miniChatLoading, setMiniChatLoading] = useState(false)
+  const [miniChatSending, setMiniChatSending] = useState(false)
   const [notifications, setNotifications] = useState([])
   const [notificationsLoading, setNotificationsLoading] = useState(false)
   const [notificationError, setNotificationError] = useState('')
@@ -95,6 +138,9 @@ function App() {
   const searchInputRef = useRef(null)
   const userMenuRef = useRef(null)
   const notificationMenuRef = useRef(null)
+  const chatMenuRef = useRef(null)
+  const miniChatViewportRef = useRef(null)
+  const activeMiniChatFriendRef = useRef('')
   const location = useLocation()
   const navigate = useNavigate()
   const loginRedirectPathRef = useRef('/')
@@ -316,6 +362,14 @@ function App() {
 
     return playlists.find((playlist) => playlist._id === selectedPlaylistId) || null
   }, [playlists, selectedPlaylistId])
+
+  const activeMiniChatFriend = useMemo(() => {
+    if (!activeMiniChatFriendId) {
+      return null
+    }
+
+    return chatFriends.find((friend) => friend.id === activeMiniChatFriendId) || null
+  }, [chatFriends, activeMiniChatFriendId])
 
   const {
     songs,
@@ -568,6 +622,146 @@ function App() {
     }
   }
 
+  const upsertMiniChatMessage = (nextMessageRaw, { fallbackState = 'sent' } = {}) => {
+    const nextMessage = normalizeChatMessage(nextMessageRaw, { fallbackState })
+    if (!nextMessage || !nextMessage.id) {
+      return
+    }
+
+    setMiniChatMessages((prev) => {
+      const existingById = prev.findIndex((item) => item.id === nextMessage.id)
+      const existingByTempId = existingById < 0 && nextMessage.clientTempId
+        ? prev.findIndex((item) => item.clientTempId && item.clientTempId === nextMessage.clientTempId)
+        : -1
+      const targetIndex = existingById >= 0 ? existingById : existingByTempId
+
+      if (targetIndex >= 0) {
+        const next = [...prev]
+        next[targetIndex] = {
+          ...next[targetIndex],
+          ...nextMessage,
+        }
+
+        return sortMessagesByTime(next)
+      }
+
+      return sortMessagesByTime([...prev, nextMessage])
+    })
+  }
+
+  const loadChatFriends = async () => {
+    if (!accessToken || !currentUser) {
+      setChatFriends([])
+      return
+    }
+
+    try {
+      setChatFriendsLoading(true)
+      setChatFriendsError('')
+      const data = await socialApi.getFriends(accessToken)
+      setChatFriends(Array.isArray(data?.friends) ? data.friends : [])
+    } catch (error) {
+      setChatFriendsError(error?.message || 'Unable to load friends list')
+    } finally {
+      setChatFriendsLoading(false)
+    }
+  }
+
+  const loadMiniChatConversation = async (friendId) => {
+    if (!accessToken || !friendId) {
+      setMiniChatMessages([])
+      return
+    }
+
+    try {
+      setMiniChatLoading(true)
+      const data = await socialApi.listMessages(accessToken, friendId, { limit: 40 })
+      const messages = (Array.isArray(data?.messages) ? data.messages : [])
+        .map((item) => normalizeChatMessage(item, { fallbackState: 'sent' }))
+        .filter(Boolean)
+
+      setMiniChatMessages(sortMessagesByTime(messages))
+      await socialApi.markConversationSeen(accessToken, friendId)
+    } catch {
+      // Ignore conversation fetch failures in mini chat.
+    } finally {
+      setMiniChatLoading(false)
+    }
+  }
+
+  const handleToggleChatList = async () => {
+    if (!currentUser) {
+      handleOpenLogin('login')
+      return
+    }
+
+    setIsChatListOpen((prev) => !prev)
+    if (!isChatListOpen && chatFriends.length === 0) {
+      await loadChatFriends()
+    }
+  }
+
+  const handleOpenMiniChat = async (friendId) => {
+    const friendValue = String(friendId || '').trim()
+    if (!friendValue) {
+      return
+    }
+
+    setActiveMiniChatFriendId(friendValue)
+    setIsChatListOpen(false)
+    await loadMiniChatConversation(friendValue)
+  }
+
+  const handleCloseMiniChat = () => {
+    setActiveMiniChatFriendId('')
+    setMiniChatMessages([])
+    setMiniChatDraft('')
+  }
+
+  const handleSendMiniChatMessage = async (event) => {
+    event.preventDefault()
+
+    if (!accessToken || !activeMiniChatFriendId) {
+      return
+    }
+
+    const text = miniChatDraft.trim()
+    if (!text) {
+      return
+    }
+
+    const tempId = `temp-${Date.now()}`
+    const optimistic = {
+      id: tempId,
+      senderId: String(currentUser?.id || ''),
+      receiverId: activeMiniChatFriendId,
+      text,
+      createdAt: new Date().toISOString(),
+      seenAt: null,
+      clientTempId: tempId,
+      deliveryState: 'sending',
+    }
+
+    setMiniChatDraft('')
+    setMiniChatSending(true)
+    setMiniChatMessages((prev) => sortMessagesByTime([...prev, optimistic]))
+
+    try {
+      const data = await socialApi.sendMessage(accessToken, activeMiniChatFriendId, { text, clientTempId: tempId })
+      if (data?.message) {
+        upsertMiniChatMessage(data.message)
+      }
+    } catch {
+      setMiniChatMessages((prev) => prev.map((message) => (
+        message.id === tempId
+          ? { ...message, deliveryState: 'failed' }
+          : message
+      )))
+    } finally {
+      setMiniChatSending(false)
+    }
+  }
+
   useEffect(() => {
     if (sessionLoading || isLoginRoute || currentUser || (!isPlaylistRoute && !isAccountRoute && !isMessagesRoute)) {
       return
@@ -583,20 +777,22 @@ function App() {
   }, [sessionLoading, isLoginRoute, currentUser, isPlaylistRoute, isAccountRoute, isMessagesRoute, location.pathname, location.search, navigate, setAuthMode, setAuthError])
 
   useEffect(() => {
-    if (!isUserMenuOpen) {
+    if (!isUserMenuOpen && !isNotificationOpen && !isChatListOpen) {
       return
     }
 
     const handlePointerDown = (event) => {
       const clickedInsideUserMenu = userMenuRef.current && userMenuRef.current.contains(event.target)
       const clickedInsideNotification = notificationMenuRef.current && notificationMenuRef.current.contains(event.target)
+      const clickedInsideChatMenu = chatMenuRef.current && chatMenuRef.current.contains(event.target)
 
-      if (clickedInsideUserMenu || clickedInsideNotification) {
+      if (clickedInsideUserMenu || clickedInsideNotification || clickedInsideChatMenu) {
         return
       }
 
       setIsUserMenuOpen(false)
       setIsNotificationOpen(false)
+      setIsChatListOpen(false)
     }
 
     window.addEventListener('pointerdown', handlePointerDown)
@@ -604,11 +800,12 @@ function App() {
     return () => {
       window.removeEventListener('pointerdown', handlePointerDown)
     }
-  }, [isUserMenuOpen, isNotificationOpen])
+  }, [isUserMenuOpen, isNotificationOpen, isChatListOpen])
 
   useEffect(() => {
     setIsUserMenuOpen(false)
     setIsNotificationOpen(false)
+    setIsChatListOpen(false)
   }, [location.pathname])
 
   useEffect(() => {
@@ -667,6 +864,26 @@ function App() {
 
     setSelectedPlaylistId(routePlaylistId)
   }, [routePlaylistId, setSelectedPlaylistId])
+
+  useEffect(() => {
+    activeMiniChatFriendRef.current = activeMiniChatFriendId
+  }, [activeMiniChatFriendId])
+
+  useEffect(() => {
+    if (!activeMiniChatFriendId || !isAppSocketConnected || !appSocketRef.current) {
+      return
+    }
+
+    appSocketRef.current.emit('chat:join', { friendId: activeMiniChatFriendId })
+  }, [activeMiniChatFriendId, isAppSocketConnected])
+
+  useEffect(() => {
+    if (!miniChatViewportRef.current) {
+      return
+    }
+
+    miniChatViewportRef.current.scrollTop = miniChatViewportRef.current.scrollHeight
+  }, [miniChatMessages.length, activeMiniChatFriendId])
 
   const highlightedSong = useMemo(() => {
     const selected = songs.find((song) => song._id === currentTrackId)
@@ -960,12 +1177,68 @@ function App() {
       setIsAppSocketConnected(false)
     }
 
+    const handleIncomingChatMessage = (incomingMessage) => {
+      const viewerId = String(currentUser?.id || '')
+      if (!viewerId || !incomingMessage?.id) {
+        return
+      }
+
+      const senderId = String(incomingMessage.senderId || '')
+      const receiverId = String(incomingMessage.receiverId || '')
+
+      if (senderId !== viewerId && receiverId !== viewerId) {
+        return
+      }
+
+      const conversationFriendId = senderId === viewerId ? receiverId : senderId
+      if (!conversationFriendId) {
+        return
+      }
+
+      if (activeMiniChatFriendRef.current === conversationFriendId) {
+        upsertMiniChatMessage(incomingMessage)
+
+        if (senderId === conversationFriendId) {
+          socialApi.markConversationSeen(accessToken, conversationFriendId).catch(() => {})
+        }
+      }
+
+      if (senderId === conversationFriendId) {
+        loadNotifications({ silent: true })
+      }
+    }
+
+    const handleChatSeen = (payload) => {
+      const readerId = String(payload?.readerId || '')
+      const seenAt = payload?.seenAt || null
+
+      if (!readerId || !seenAt || readerId !== activeMiniChatFriendRef.current) {
+        return
+      }
+
+      setMiniChatMessages((prev) => prev.map((item) => {
+        if (item.senderId !== String(currentUser?.id || '') || item.receiverId !== readerId) {
+          return item
+        }
+
+        return {
+          ...item,
+          seenAt,
+          deliveryState: 'seen',
+        }
+      }))
+    }
+
     socket.on('connect', handleConnect)
     socket.on('disconnect', handleDisconnect)
+    socket.on('chat:message', handleIncomingChatMessage)
+    socket.on('chat:seen', handleChatSeen)
 
     return () => {
       socket.off('connect', handleConnect)
       socket.off('disconnect', handleDisconnect)
+      socket.off('chat:message', handleIncomingChatMessage)
+      socket.off('chat:seen', handleChatSeen)
       socket.disconnect()
       appSocketRef.current = null
       setIsAppSocketConnected(false)
@@ -1654,7 +1927,6 @@ function App() {
           onSelectPlaylist={handleOpenPlaylistPage}
           likedSongsCount={likedSongs.length}
           likedSongs={likedSongs}
-          handleDeletePlaylist={handleDeletePlaylistWithAuth}
           artists={artists}
           playTrackById={playTrackById}
           onOpenMessages={handleOpenMessages}
@@ -1665,6 +1937,7 @@ function App() {
       )}
 
       mainContent={(
+        <>
         <main className="rounded-lg bg-[#121212] p-2">
           <div className="rounded-lg bg-linear-to-b from-[#1a1f4d] via-[#121212] to-[#121212] p-4">
             <div className="mb-5 flex items-center justify-between gap-3">
@@ -1706,7 +1979,6 @@ function App() {
               </div>
 
               <div className="flex items-center gap-2">
-                <button type="button" className="type-button-sm hidden rounded-full bg-white px-4 py-2 text-black sm:block">Explore Premium</button>
                 {isAdmin && (
                   <button
                     type="button"
@@ -1736,12 +2008,61 @@ function App() {
                 ) : (
                   <>
                     <button type="button" className="type-button-sm rounded-full bg-zinc-800 px-3 py-2">Install App</button>
+                    <div className="relative" ref={chatMenuRef}>
+                      <button
+                        type="button"
+                        onClick={handleToggleChatList}
+                        className="rounded-full bg-zinc-800 p-2 text-zinc-200 hover:bg-zinc-700"
+                        title="Chat"
+                        aria-label="Open chat list"
+                      >
+                        <Icon className="h-4 w-4"><path d="M4 4h16a2 2 0 012 2v9a2 2 0 01-2 2H9l-5 4v-4H4a2 2 0 01-2-2V6a2 2 0 012-2z"/></Icon>
+                      </button>
+
+                      {isChatListOpen && (
+                        <div className="absolute right-0 mt-2 w-80 rounded-xl border border-white/10 bg-zinc-900 p-2 shadow-2xl shadow-black/60">
+                          <div className="mb-2 px-2 pt-1">
+                            <p className="text-base font-semibold text-white">Chats</p>
+                            <p className="text-xs text-zinc-400">Select a friend to open a mini chat window</p>
+                          </div>
+
+                          {chatFriendsLoading ? <p className="px-2 py-2 text-sm text-zinc-400">Loading friends...</p> : null}
+                          {chatFriendsError ? <p className="mx-2 mb-2 rounded bg-red-500/20 px-2 py-1 text-xs text-red-200">{chatFriendsError}</p> : null}
+
+                          {!chatFriendsLoading && chatFriends.length === 0 ? (
+                            <p className="px-2 py-2 text-sm text-zinc-500">No friends available.</p>
+                          ) : null}
+
+                          <div className="max-h-80 space-y-1 overflow-y-auto pr-1">
+                            {chatFriends.map((friend) => (
+                              <button
+                                key={friend.id}
+                                type="button"
+                                onClick={() => handleOpenMiniChat(friend.id)}
+                                className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left hover:bg-white/10"
+                              >
+                                <div className="relative h-9 w-9 shrink-0 rounded-full bg-zinc-700 text-center text-xs font-semibold leading-9 text-zinc-100">
+                                  {friend.avatarUrl ? (
+                                    <img src={friend.avatarUrl} alt={friend.name} className="h-full w-full rounded-full object-cover" />
+                                  ) : getInitials(friend.name)}
+                                  <span className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-zinc-900 ${friend.isOnline ? 'bg-emerald-400' : 'bg-zinc-500'}`} />
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="truncate text-sm font-semibold text-zinc-100">{friend.name}</p>
+                                  <p className="truncate text-[11px] text-zinc-400">{friend.isOnline ? 'Online' : 'Offline'}</p>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                     <div className="relative" ref={notificationMenuRef}>
                       <button
                         type="button"
                         onClick={handleOpenNotifications}
                         className="relative rounded-full bg-zinc-800 p-2 text-zinc-200 hover:bg-zinc-700"
-                        title="Thong bao"
+                        title="Notifications"
                       >
                         <Icon className="h-4 w-4"><path d="M12 2a6 6 0 00-6 6v3.6c0 .8-.26 1.58-.74 2.22L4 16h16l-1.26-2.18a4.4 4.4 0 01-.74-2.22V8a6 6 0 00-6-6zm0 20a2.5 2.5 0 002.45-2h-4.9A2.5 2.5 0 0012 22z"/></Icon>
                         {unreadNotificationsCount > 0 && (
@@ -1754,21 +2075,21 @@ function App() {
                       {isNotificationOpen && (
                         <div className="absolute right-0 mt-2 w-96 rounded-xl border border-white/10 bg-zinc-900 p-2 shadow-2xl shadow-black/60">
                           <div className="mb-2 flex items-center justify-between px-2 pt-1">
-                            <p className="text-base font-semibold text-white">Thong bao</p>
+                            <p className="text-base font-semibold text-white">Notifications</p>
                             <button
                               type="button"
                               onClick={handleMarkAllNotificationsRead}
                               className="type-button-sm rounded-md px-2 py-1 text-xs text-zinc-300 hover:bg-white/10"
                             >
-                              Danh dau da doc
+                              Mark all as read
                             </button>
                           </div>
 
-                          {notificationsLoading ? <p className="px-2 py-2 text-sm text-zinc-400">Dang tai thong bao...</p> : null}
+                          {notificationsLoading ? <p className="px-2 py-2 text-sm text-zinc-400">Loading notifications...</p> : null}
                           {notificationError ? <p className="mx-2 mb-2 rounded bg-red-500/20 px-2 py-1 text-xs text-red-200">{notificationError}</p> : null}
 
                           {!notificationsLoading && notifications.length === 0 ? (
-                            <p className="px-2 py-2 text-sm text-zinc-500">Chua co thong bao nao.</p>
+                            <p className="px-2 py-2 text-sm text-zinc-500">No notifications yet.</p>
                           ) : null}
 
                           <div className="max-h-80 space-y-1 overflow-y-auto pr-1">
@@ -1914,6 +2235,7 @@ function App() {
                 handleRemoveSongFromPlaylist={handleRemoveSongFromPlaylistWithAuth}
                 handleMoveSongInPlaylist={handleMoveSongInPlaylistWithAuth}
                 handleDragReorderSongsInPlaylist={handleReorderSongsInPlaylistWithAuth}
+                handleDeletePlaylist={handleDeletePlaylistWithAuth}
                 handleRenamePlaylist={handleRenamePlaylistWithAuth}
                 handleUpdatePlaylistCover={handleUpdatePlaylistCoverWithAuth}
                 handleUploadPlaylistCover={handleUploadPlaylistCoverWithAuth}
@@ -1962,6 +2284,62 @@ function App() {
             )}
           </div>
         </main>
+
+        {activeMiniChatFriend && (
+          <div className="fixed bottom-24 right-4 z-50 w-[min(380px,calc(100vw-24px))] overflow-hidden rounded-xl border border-white/10 bg-zinc-900 shadow-2xl shadow-black/60">
+            <div className="flex items-center justify-between bg-zinc-800/80 px-3 py-2">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-white">{activeMiniChatFriend.name}</p>
+                <p className="text-[11px] text-zinc-300">{activeMiniChatFriend.isOnline ? 'Online now' : 'Offline'}</p>
+              </div>
+              <button
+                type="button"
+                onClick={handleCloseMiniChat}
+                className="rounded-md px-2 py-1 text-xs text-zinc-200 hover:bg-white/10"
+              >
+                Close
+              </button>
+            </div>
+
+            <div ref={miniChatViewportRef} className="h-72 space-y-2 overflow-y-auto bg-zinc-950/80 px-3 py-3">
+              {miniChatLoading && <p className="text-xs text-zinc-500">Loading conversation...</p>}
+              {!miniChatLoading && miniChatMessages.length === 0 && (
+                <p className="text-xs text-zinc-500">No messages yet. Start the conversation.</p>
+              )}
+              {miniChatMessages.map((message) => {
+                const isMine = String(message.senderId) === String(currentUser?.id || '')
+
+                return (
+                  <div key={`${message.id}-${message.createdAt}`} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[78%] rounded-2xl px-3 py-2 text-sm ${isMine ? 'bg-green-500 text-black' : 'bg-zinc-800 text-zinc-100'}`}>
+                      <p className="whitespace-pre-wrap wrap-break-word">{message.text}</p>
+                      <p className={`mt-1 text-[10px] ${isMine ? 'text-black/70' : 'text-zinc-400'}`}>
+                        {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            <form onSubmit={handleSendMiniChatMessage} className="flex items-center gap-2 border-t border-white/10 bg-zinc-900 px-3 py-2">
+              <input
+                value={miniChatDraft}
+                onChange={(event) => setMiniChatDraft(event.target.value)}
+                placeholder="Type a message..."
+                className="w-full rounded-full bg-zinc-800 px-3 py-2 text-sm text-zinc-100 outline-none ring-1 ring-transparent transition focus:ring-green-500"
+              />
+              <button
+                type="submit"
+                disabled={!miniChatDraft.trim() || miniChatSending}
+                className="rounded-full bg-green-500 px-3 py-2 text-xs font-semibold text-black disabled:opacity-60"
+              >
+                Send
+              </button>
+            </form>
+          </div>
+        )}
+        </>
       )}
 
       rightSidebar={(
