@@ -24,6 +24,5 @@ const artistSchema = new mongoose.Schema(
 );
 
 artistSchema.index({ name: "text", slug: 1 });
-artistSchema.index({ slug: 1 }, { unique: true });
 
 export const Artist = mongoose.model("Artist", artistSchema);

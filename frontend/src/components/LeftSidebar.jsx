@@ -16,6 +16,7 @@ function LeftSidebar({
   onResizeStart = () => {},
   likedSongsCount = 0,
   likedSongs = [],
+  likedSongsCoverUrl = '',
   onOpenMessages = () => {},
   onOpenLikedSongs = () => {},
   isLikedSongsRoute = false,
@@ -27,6 +28,7 @@ function LeftSidebar({
   const textRevealClass = effectiveCollapsed
     ? 'max-w-0 opacity-0'
     : 'max-w-[220px] opacity-100'
+  const likedSongsPreviewCoverUrl = likedSongsCoverUrl || likedSongs[0]?.coverUrl || ''
 
   const flyoutClassName = ''
 
@@ -184,6 +186,23 @@ function LeftSidebar({
                   </button>
                   <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-400">{likedSongsCount}</span>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={onOpenLikedSongs}
+                  className={`mb-2 flex w-full items-center gap-2 rounded-md px-2 py-2 text-left transition ${isLikedSongsRoute ? 'bg-green-500/15 ring-1 ring-green-400/50' : 'bg-zinc-900/70 hover:bg-zinc-800'}`}
+                  title="Open liked songs"
+                >
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md bg-zinc-800 text-[10px] font-bold text-zinc-300">
+                    {likedSongsPreviewCoverUrl ? (
+                      <img src={likedSongsPreviewCoverUrl} alt="Liked songs cover" className="h-full w-full object-cover" />
+                    ) : 'LIKE'}
+                  </div>
+                  <div className="min-w-0">
+                    <p className={`truncate text-sm font-semibold ${isLikedSongsRoute ? 'text-green-300' : 'text-zinc-100'}`}>Liked Songs</p>
+                    <p className="truncate text-[11px] text-zinc-400">{likedSongsCount} tracks</p>
+                  </div>
+                </button>
 
                 {likedSongs.length === 0 ? (
                   <p className="rounded-md bg-zinc-900/60 px-2 py-2 text-xs text-zinc-500">No liked songs yet</p>

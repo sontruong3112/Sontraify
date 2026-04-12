@@ -2421,6 +2421,29 @@ function App() {
     handleSeekBySeconds,
   ])
 
+  if (sessionLoading) {
+    return (
+      <main className="loading-screen min-h-screen bg-black text-white">
+        <div className="loading-screen__ambient" aria-hidden="true" />
+        <div className="loading-screen__card">
+          <div className="loading-disc" aria-hidden="true">
+            <span className="loading-disc__ring loading-disc__ring--outer" />
+            <span className="loading-disc__ring loading-disc__ring--inner" />
+            <span className="loading-disc__core" />
+          </div>
+          <p className="mt-4 text-sm font-semibold tracking-[0.18em] text-zinc-200">SONTRAIFY</p>
+          <p className="mt-2 text-xs text-zinc-400">Đang tải trải nghiệm của bạn...</p>
+          <div className="loading-bars mt-4" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+            <span />
+          </div>
+        </div>
+      </main>
+    )
+  }
+
   if (isLoginRoute) {
     return (
       <main className="min-h-screen bg-linear-to-b from-black via-[#121212] to-black px-4 py-6 sm:px-6 lg:px-8">
@@ -2491,6 +2514,7 @@ function App() {
           onSelectPlaylist={handleOpenPlaylistPage}
           likedSongsCount={likedSongs.length}
           likedSongs={likedSongs}
+          likedSongsCoverUrl={likedCollectionCoverUrl}
           artists={artists}
           playTrackById={playTrackById}
           onOpenMessages={handleOpenMessages}
