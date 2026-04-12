@@ -1,15 +1,12 @@
-﻿import { useEffect, useRef, useState } from 'react'
-import { useAuth, useSignIn } from '@clerk/clerk-react'
+﻿import { useState } from 'react'
+import { useSignIn } from '@clerk/clerk-react'
 
 function ClerkGoogleAuthButton({
-  onClerkLogin,
   setAuthError,
   authLoading,
 }) {
-  const { isLoaded, isSignedIn, getToken } = useAuth()
-  const { signIn } = useSignIn()
+  const { isLoaded, signIn } = useSignIn()
   const [clerkLoading, setClerkLoading] = useState(false)
-  const hasExchangedRef = useRef(false)
 
   const handleClerkGoogleSignIn = async () => {
     if (!isLoaded || !signIn) {
@@ -24,60 +21,13 @@ function ClerkGoogleAuthButton({
       await signIn.authenticateWithRedirect({
         strategy: 'oauth_google',
         redirectUrl: `${window.location.origin}/#/sso-callback`,
-        redirectUrlComplete: `${window.location.origin}/#/login`,
+        redirectUrlComplete: `${window.location.origin}/#/sso-callback`,
       })
     } catch (error) {
       setAuthError(error?.errors?.[0]?.message || error?.message || 'Đăng nhập Google qua Clerk thất bại')
       setClerkLoading(false)
     }
   }
-
-  useEffect(() => {
-    if (!isLoaded || !isSignedIn) {
-      return
-    }
-
-    if (hasExchangedRef.current) {
-      return
-    }
-
-    hasExchangedRef.current = true
-
-    let active = true
-
-    const exchangeClerkToken = async () => {
-      try {
-        const token = await getToken()
-        if (!token) {
-          throw new Error('Không lấy được Clerk token')
-        }
-
-        if (!active) {
-          return
-        }
-
-        await onClerkLogin(token)
-      } catch (error) {
-        if (!active) {
-          return
-        }
-
-        hasExchangedRef.current = false
-        setAuthError(error?.message || 'Đăng nhập Clerk thất bại')
-      } finally {
-        if (active) {
-          setClerkLoading(false)
-        }
-      }
-    }
-
-    setClerkLoading(true)
-    exchangeClerkToken()
-
-    return () => {
-      active = false
-    }
-  }, [isLoaded, isSignedIn, getToken, onClerkLogin, setAuthError])
 
   return (
     <button
@@ -104,7 +54,6 @@ function LoginPage({
   authForm,
   handleAuthInput,
   handleAuthSubmit,
-  handleClerkLogin,
   authError,
   authLoading,
   onBackToPrevious,
@@ -188,7 +137,6 @@ function LoginPage({
 
         {hasValidClerkKey ? (
           <ClerkGoogleAuthButton
-            onClerkLogin={handleClerkLogin}
             setAuthError={setAuthError}
             authLoading={authLoading}
           />

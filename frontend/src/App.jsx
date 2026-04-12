@@ -15,6 +15,7 @@ import AdminPage from './pages/AdminPage'
 import AlbumPage from './pages/AlbumPage'
 import AccountPage from './pages/AccountPage'
 import ArtistPage from './pages/ArtistPage'
+import ClerkCallbackPage from './pages/ClerkCallbackPage'
 import LoginPage from './pages/LoginPage'
 import MessagesPage from './pages/MessagesPage'
 import PlaylistPage from './pages/PlaylistPage'
@@ -2447,14 +2448,13 @@ function App() {
   if (isClerkSsoCallbackRoute) {
     return (
       <main className="min-h-screen bg-linear-to-b from-black via-[#121212] to-black px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mx-auto flex min-h-[50vh] w-full max-w-105 items-center justify-center rounded-2xl border border-white/10 bg-black/55 p-6 shadow-2xl shadow-black/60 backdrop-blur-sm">
-          <AuthenticateWithRedirectCallback
-            afterSignInUrl="/#/login"
-            afterSignUpUrl="/#/login"
-            signInFallbackRedirectUrl="/#/login"
-            signUpFallbackRedirectUrl="/#/login"
-          />
-        </div>
+        <ClerkCallbackPage
+          handleClerkLogin={handleClerkLogin}
+          onError={(message) => {
+            setAuthMode('login')
+            setAuthError(message)
+          }}
+        />
       </main>
     )
   }
@@ -2469,7 +2469,6 @@ function App() {
           authForm={authForm}
           handleAuthInput={handleAuthInput}
           handleAuthSubmit={handleAuthSubmit}
-          handleClerkLogin={handleClerkLogin}
           authError={authError}
           authLoading={authLoading}
           onBackToPrevious={handleGoHome}
