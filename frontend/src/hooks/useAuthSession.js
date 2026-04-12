@@ -116,62 +116,6 @@ export function useAuthSession({ onSessionCleared } = {}) {
     }
   }
 
-  const handleGoogleLogin = async (googleAccessToken) => {
-    try {
-      setAuthLoading(true)
-      setAuthError('')
-
-      const tokenValue = String(googleAccessToken || '').trim()
-
-      if (!tokenValue) {
-        throw new Error('Google access token is missing')
-      }
-
-      const data = await authApi.googleLogin({ accessToken: tokenValue })
-      const nextToken = data?.tokens?.accessToken || ''
-
-      if (!nextToken || !data?.user) {
-        throw new Error('Phản hồi đăng nhập Google không hợp lệ')
-      }
-
-      updateAccessToken(nextToken)
-      setCurrentUser(data.user)
-      setAuthForm({ name: '', email: '', password: '' })
-    } catch (requestError) {
-      setAuthError(requestError.message || 'Đăng nhập Google thất bại')
-    } finally {
-      setAuthLoading(false)
-    }
-  }
-
-  const handleClerkLogin = async (clerkToken) => {
-    try {
-      setAuthLoading(true)
-      setAuthError('')
-
-      const tokenValue = String(clerkToken || '').trim()
-
-      if (!tokenValue) {
-        throw new Error('Clerk token is missing')
-      }
-
-      const data = await authApi.clerkLogin({ token: tokenValue })
-      const nextToken = data?.tokens?.accessToken || ''
-
-      if (!nextToken || !data?.user) {
-        throw new Error('Phản hồi đăng nhập Clerk không hợp lệ')
-      }
-
-      updateAccessToken(nextToken)
-      setCurrentUser(data.user)
-      setAuthForm({ name: '', email: '', password: '' })
-    } catch (requestError) {
-      setAuthError(requestError.message || 'Đăng nhập Clerk thất bại')
-    } finally {
-      setAuthLoading(false)
-    }
-  }
-
   const handleLogout = async () => {
     try {
       setAuthLoading(true)
@@ -214,8 +158,6 @@ export function useAuthSession({ onSessionCleared } = {}) {
     authForm,
     handleAuthInput,
     handleAuthSubmit,
-    handleGoogleLogin,
-    handleClerkLogin,
     handleUpdateProfile,
     handleLogout,
   }

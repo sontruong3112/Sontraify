@@ -27,20 +27,6 @@ export const preferenceActionValidator = [
   body("direction").optional().isInt().withMessage("direction must be an integer"),
 ];
 
-export const googleAuthValidator = [
-  body("accessToken")
-    .isString()
-    .notEmpty()
-    .withMessage("accessToken is required"),
-];
-
-export const clerkAuthValidator = [
-  body("token")
-    .isString()
-    .notEmpty()
-    .withMessage("token is required"),
-];
-
 export const updateMeValidator = [
   body("name")
     .optional()

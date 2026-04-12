@@ -1,8 +1,6 @@
 import express from "express";
 import {
 	applyPreferenceAction,
-	clerkLogin,
-	googleLogin,
 	getMe,
 	getPreferences,
 	listUsersForAdmin,
@@ -28,8 +26,6 @@ import {
 	logoutValidator,
 	preferenceActionValidator,
 	registerValidator,
-	googleAuthValidator,
-	clerkAuthValidator,
 	updateMeValidator,
 } from "../validators/authValidators.js";
 
@@ -37,8 +33,6 @@ const router = express.Router();
 
 router.post("/register", registerValidator, validateRequest, register);
 router.post("/login", loginValidator, validateRequest, login);
-router.post("/google", googleAuthValidator, validateRequest, googleLogin);
-router.post("/clerk", clerkAuthValidator, validateRequest, clerkLogin);
 router.post("/admin/login", loginValidator, validateRequest, loginAdmin);
 router.post("/refresh-token", refreshAccessToken);
 router.post("/logout", logoutValidator, validateRequest, logout);

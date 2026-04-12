@@ -29,10 +29,6 @@ services:
         sync: false
       - key: CLOUDINARY_FOLDER
         value: music-app
-      - key: GOOGLE_CLIENT_ID
-        sync: false
-      - key: CLERK_SECRET_KEY
-        sync: false
 
   - type: web
     name: sontraify-frontend
@@ -48,7 +44,3 @@ services:
     envVars:
       - key: VITE_API_BASE_URL
         value: https://sontraify-backend.onrender.com/api/v1
-      - key: VITE_GOOGLE_CLIENT_ID
-        sync: false
-      - key: VITE_CLERK_PUBLISHABLE_KEY
-        sync: false

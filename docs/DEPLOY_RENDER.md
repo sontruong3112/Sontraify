@@ -28,11 +28,6 @@ Set these required secrets in Render for backend service:
 - `CLOUDINARY_CLOUD_NAME`
 - `CLOUDINARY_API_KEY`
 - `CLOUDINARY_API_SECRET`
-- `GOOGLE_CLIENT_ID` (optional if you skip Google login for now)
-
-Set these for frontend service:
-
-- `VITE_GOOGLE_CLIENT_ID` (optional if you skip Google login for now)
 
 ## 4. Update service URLs
 
@@ -60,9 +55,3 @@ Example:
 - If your account does not offer Free Web Service, choose `Starter` for backend.
 - Static frontend can stay on free static hosting.
 - If your local machine is off, Render services still run.
-
-## Clerk Login Troubleshooting
-
-- Ensure `VITE_CLERK_PUBLISHABLE_KEY` is a real Clerk publishable key and starts with `pk_test_` or `pk_live_`.
-- Do not use Clerk URLs (for example `https://...clerk.accounts.dev`) as publishable keys.
-- Ensure `CLERK_SECRET_KEY` is configured on backend and starts with `sk_test_` or `sk_live_`.
