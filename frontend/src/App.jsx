@@ -1898,6 +1898,11 @@ function App() {
   const clearQueue = () => {
     requireAuthenticatedAction(() => {
       setQueuedTrackIds([])
+      // Also constrain forced playback to the current track so "Next up" is cleared
+      setForcedPlaybackSongIds((prev) => {
+        if (currentTrackId) return [currentTrackId]
+        return []
+      })
       syncPreferenceAction({ action: 'queue_clear' })
     })
   }
