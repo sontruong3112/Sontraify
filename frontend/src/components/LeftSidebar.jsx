@@ -52,7 +52,7 @@ function LeftSidebar({
             className={`flex items-center text-xl font-bold ${effectiveCollapsed ? 'justify-center' : 'gap-2'}`}
             title="Home"
           >
-            <img src="/favicon.svg" alt="Sontraify logo" className="h-7 w-7 rounded-md" />
+            <img src="/logo-white.svg" alt="Sontraify logo" className="h-8 w-8 rounded-md" />
             <span className={`overflow-hidden whitespace-nowrap transition-all duration-300 ease-in-out ${textRevealClass}`}>
               Sontraify
             </span>
