@@ -2457,7 +2457,7 @@ function App() {
           handleGoogleLogin={handleGoogleLogin}
           authError={authError}
           authLoading={authLoading}
-          onBackToPrevious={() => navigate(loginRedirectPathRef.current || '/', { replace: true })}
+          onBackToPrevious={handleGoHome}
         />
       </main>
     )
