@@ -193,6 +193,7 @@ function App() {
   const [artistLibrary, setArtistLibrary] = useState([])
   const [artistLibraryLoading, setArtistLibraryLoading] = useState(false)
   const [artistLibraryError, setArtistLibraryError] = useState('')
+  const [editingArtistId, setEditingArtistId] = useState('')
   const [selectedArtistDetail, setSelectedArtistDetail] = useState(null)
   const [selectedArtistLoading, setSelectedArtistLoading] = useState(false)
   const [selectedAlbumDetail, setSelectedAlbumDetail] = useState(null)
@@ -603,11 +604,46 @@ function App() {
     try {
       setArtistMutationLoading(true)
       setArtistMutationError('')
-      await artistsApi.create(accessToken, payload)
+      if (editingArtistId) {
+        await artistsApi.update(accessToken, editingArtistId, payload)
+        setEditingArtistId('')
+      } else {
+        await artistsApi.create(accessToken, payload)
+      }
       setAdminArtistForm({ name: '', bio: '', avatarUrl: '', bannerUrl: '' })
       await loadArtistsLibrary({ silent: true })
     } catch (error) {
       setArtistMutationError(error?.message || 'Unable to create artist')
+    } finally {
+      setArtistMutationLoading(false)
+    }
+  }
+
+  const startEditArtist = (artist) => {
+    setEditingArtistId(artist.id || artist._id || '')
+    setArtistMutationError('')
+    setAdminArtistForm({
+      name: artist.name || '',
+      bio: artist.bio || '',
+      avatarUrl: artist.avatarUrl || '',
+      bannerUrl: artist.bannerUrl || '',
+    })
+  }
+
+  const handleDeleteArtistByAdmin = async (artistId) => {
+    if (!accessToken || !isAdmin) return
+
+    try {
+      setArtistMutationLoading(true)
+      setArtistMutationError('')
+      await artistsApi.remove(accessToken, artistId)
+      await loadArtistsLibrary({ silent: true })
+      if (editingArtistId === artistId) {
+        setEditingArtistId('')
+        setAdminArtistForm({ name: '', bio: '', avatarUrl: '', bannerUrl: '' })
+      }
+    } catch (error) {
+      setArtistMutationError(error?.message || 'Unable to delete artist')
     } finally {
       setArtistMutationLoading(false)
     }
@@ -2963,6 +2999,8 @@ function App() {
                   adminArtistForm={adminArtistForm}
                   onAdminArtistInput={handleAdminArtistInput}
                   onCreateArtist={handleCreateArtistByAdmin}
+                  onEditArtist={startEditArtist}
+                  onDeleteArtist={handleDeleteArtistByAdmin}
                   adminAlbumForm={adminAlbumForm}
                   onAdminAlbumInput={handleAdminAlbumInput}
                   onCreateAlbum={handleCreateAlbumByAdmin}
