@@ -628,6 +628,9 @@ function App() {
       avatarUrl: artist.avatarUrl || '',
       bannerUrl: artist.bannerUrl || '',
     })
+    if (!isAdminRoute && isAdmin) {
+      navigate('/admin')
+    }
   }
 
   const handleDeleteArtistByAdmin = async (artistId) => {
@@ -647,6 +650,12 @@ function App() {
     } finally {
       setArtistMutationLoading(false)
     }
+  }
+
+  const resetAdminArtistForm = () => {
+    setEditingArtistId('')
+    setAdminArtistForm({ name: '', bio: '', avatarUrl: '', bannerUrl: '' })
+    setArtistMutationError('')
   }
 
   const handleCreateAlbumByAdmin = async (event) => {
@@ -3001,6 +3010,8 @@ function App() {
                   onCreateArtist={handleCreateArtistByAdmin}
                   onEditArtist={startEditArtist}
                   onDeleteArtist={handleDeleteArtistByAdmin}
+                  editingArtistId={editingArtistId}
+                  onResetAdminArtistForm={resetAdminArtistForm}
                   adminAlbumForm={adminAlbumForm}
                   onAdminAlbumInput={handleAdminAlbumInput}
                   onCreateAlbum={handleCreateAlbumByAdmin}

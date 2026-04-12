@@ -38,6 +38,8 @@ function AdminPage({
   onCreateArtist = () => {},
   onEditArtist = () => {},
   onDeleteArtist = () => {},
+  editingArtistId = '',
+  onResetAdminArtistForm = () => {},
   adminAlbumForm = { artistId: '', title: '', coverUrl: '', description: '', releaseDate: '' },
   onAdminAlbumInput = () => {},
   onCreateAlbum = () => {},
@@ -301,14 +303,19 @@ function AdminPage({
 
         <div className="grid gap-3 lg:grid-cols-2">
           <form className="space-y-2 rounded-md bg-zinc-900/50 p-3" onSubmit={onCreateArtist}>
-            <p className="text-sm font-semibold text-zinc-100">Create artist</p>
+            <p className="text-sm font-semibold text-zinc-100">{editingArtistId ? 'Edit artist' : 'Create artist'}</p>
             <input name="name" value={adminArtistForm.name} onChange={onAdminArtistInput} placeholder="Artist name" className="w-full rounded-md bg-zinc-900 px-3 py-2 text-sm" required />
             <input name="avatarUrl" value={adminArtistForm.avatarUrl} onChange={onAdminArtistInput} placeholder="Avatar URL" className="w-full rounded-md bg-zinc-900 px-3 py-2 text-sm" />
             <input name="bannerUrl" value={adminArtistForm.bannerUrl} onChange={onAdminArtistInput} placeholder="Banner URL" className="w-full rounded-md bg-zinc-900 px-3 py-2 text-sm" />
             <textarea name="bio" value={adminArtistForm.bio} onChange={onAdminArtistInput} placeholder="Artist bio" className="min-h-20 w-full rounded-md bg-zinc-900 px-3 py-2 text-sm" />
-            <button type="submit" disabled={artistMutationLoading} className="type-button-sm rounded-md bg-white px-4 py-2 text-black disabled:opacity-70">
-              {artistMutationLoading ? 'Saving...' : 'Create artist'}
-            </button>
+            <div className="flex gap-2">
+              <button type="submit" disabled={artistMutationLoading} className="type-button-sm rounded-md bg-white px-4 py-2 text-black disabled:opacity-70">
+                {artistMutationLoading ? 'Saving...' : editingArtistId ? 'Update artist' : 'Create artist'}
+              </button>
+              {editingArtistId && (
+                <button type="button" onClick={onResetAdminArtistForm} className="type-button-sm rounded-md bg-zinc-800 px-4 py-2">Cancel</button>
+              )}
+            </div>
           </form>
 
           <form className="space-y-2 rounded-md bg-zinc-900/50 p-3" onSubmit={onCreateAlbum}>
