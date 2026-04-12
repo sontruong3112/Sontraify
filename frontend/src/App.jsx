@@ -303,7 +303,7 @@ function App() {
     authForm,
     handleAuthInput,
     handleAuthSubmit,
-    handleGoogleLogin,
+    handleClerkLogin,
     handleUpdateProfile,
     handleLogout,
   } = useAuthSession({
@@ -2454,7 +2454,7 @@ function App() {
           authForm={authForm}
           handleAuthInput={handleAuthInput}
           handleAuthSubmit={handleAuthSubmit}
-          handleGoogleLogin={handleGoogleLogin}
+          handleClerkLogin={handleClerkLogin}
           authError={authError}
           authLoading={authLoading}
           onBackToPrevious={handleGoHome}

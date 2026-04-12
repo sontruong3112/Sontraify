@@ -16,6 +16,7 @@ export const env = {
   cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET || "",
   cloudinaryFolder: process.env.CLOUDINARY_FOLDER || "music-app",
   googleClientId: process.env.GOOGLE_CLIENT_ID || "",
+  clerkSecretKey: process.env.CLERK_SECRET_KEY || "",
 };
 
 export const validateEnv = () => {

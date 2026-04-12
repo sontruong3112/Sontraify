@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import crypto from "node:crypto";
 import jwt from "jsonwebtoken";
+import { createClerkClient, verifyToken } from "@clerk/backend";
 import { env } from "../config/env.js";
 import { Notification } from "../models/Notification.js";
 import { User } from "../models/User.js";
@@ -183,6 +184,28 @@ const fetchGoogleUserInfo = async (accessToken) => {
   return response.json();
 };
 
+const buildClerkDisplayName = (clerkUser, fallbackEmail = "") => {
+  const fullName = String(clerkUser?.fullName || "").trim();
+  if (fullName) {
+    return fullName;
+  }
+
+  const firstName = String(clerkUser?.firstName || "").trim();
+  const lastName = String(clerkUser?.lastName || "").trim();
+  const joined = `${firstName} ${lastName}`.trim();
+
+  if (joined) {
+    return joined;
+  }
+
+  const username = String(clerkUser?.username || "").trim();
+  if (username) {
+    return username;
+  }
+
+  return fallbackEmail ? fallbackEmail.split("@")[0] : "User";
+};
+
 export const register = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
 
@@ -327,6 +350,107 @@ export const googleLogin = asyncHandler(async (req, res) => {
 
   return ok(res, {
     message: "Logged in with Google",
+    data: {
+      user: buildUserResponse(user),
+      tokens,
+    },
+    extra: {
+      user: buildUserResponse(user),
+      tokens,
+    },
+  });
+});
+
+export const clerkLogin = asyncHandler(async (req, res) => {
+  const token = String(req.body?.token || "").trim();
+
+  if (!env.clerkSecretKey) {
+    return fail(res, {
+      statusCode: 503,
+      message: "Clerk login is not configured on server",
+    });
+  }
+
+  if (!token) {
+    return fail(res, {
+      statusCode: 400,
+      message: "token is required",
+    });
+  }
+
+  let verifiedToken;
+
+  try {
+    verifiedToken = await verifyToken(token, {
+      secretKey: env.clerkSecretKey,
+    });
+  } catch {
+    return fail(res, {
+      statusCode: 401,
+      message: "Clerk token is invalid",
+    });
+  }
+
+  const clerkUserId = String(verifiedToken?.sub || "").trim();
+
+  if (!clerkUserId) {
+    return fail(res, {
+      statusCode: 401,
+      message: "Clerk token is missing subject",
+    });
+  }
+
+  const clerkClient = createClerkClient({ secretKey: env.clerkSecretKey });
+  const clerkUser = await clerkClient.users.getUser(clerkUserId);
+
+  const primaryEmail = clerkUser?.emailAddresses?.find(
+    (item) => item.id === clerkUser?.primaryEmailAddressId
+  );
+  const email = String(
+    primaryEmail?.emailAddress || clerkUser?.emailAddresses?.[0]?.emailAddress || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  if (!email) {
+    return fail(res, {
+      statusCode: 401,
+      message: "Clerk account has no verified email",
+    });
+  }
+
+  const displayName = buildClerkDisplayName(clerkUser, email);
+  const avatarUrl = String(clerkUser?.imageUrl || "").trim();
+  const randomPasswordHash = await bcrypt.hash(crypto.randomUUID(), 10);
+
+  let user = await User.findOne({
+    $or: [
+      { clerkId: clerkUserId },
+      { email },
+    ],
+  });
+
+  if (!user) {
+    user = await User.create({
+      name: displayName,
+      email,
+      passwordHash: randomPasswordHash,
+      authProvider: "clerk",
+      clerkId: clerkUserId,
+      avatarUrl,
+    });
+  } else {
+    user.name = user.name || displayName;
+    user.authProvider = "clerk";
+    user.clerkId = clerkUserId;
+    user.avatarUrl = avatarUrl || user.avatarUrl;
+    await user.save();
+  }
+
+  const tokens = await issueTokenPair(user, res);
+
+  return ok(res, {
+    message: "Logged in with Clerk",
     data: {
       user: buildUserResponse(user),
       tokens,

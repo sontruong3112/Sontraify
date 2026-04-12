@@ -144,6 +144,34 @@ export function useAuthSession({ onSessionCleared } = {}) {
     }
   }
 
+  const handleClerkLogin = async (clerkToken) => {
+    try {
+      setAuthLoading(true)
+      setAuthError('')
+
+      const tokenValue = String(clerkToken || '').trim()
+
+      if (!tokenValue) {
+        throw new Error('Clerk token is missing')
+      }
+
+      const data = await authApi.clerkLogin({ token: tokenValue })
+      const nextToken = data?.tokens?.accessToken || ''
+
+      if (!nextToken || !data?.user) {
+        throw new Error('Phản hồi đăng nhập Clerk không hợp lệ')
+      }
+
+      updateAccessToken(nextToken)
+      setCurrentUser(data.user)
+      setAuthForm({ name: '', email: '', password: '' })
+    } catch (requestError) {
+      setAuthError(requestError.message || 'Đăng nhập Clerk thất bại')
+    } finally {
+      setAuthLoading(false)
+    }
+  }
+
   const handleLogout = async () => {
     try {
       setAuthLoading(true)
@@ -187,6 +215,7 @@ export function useAuthSession({ onSessionCleared } = {}) {
     handleAuthInput,
     handleAuthSubmit,
     handleGoogleLogin,
+    handleClerkLogin,
     handleUpdateProfile,
     handleLogout,
   }

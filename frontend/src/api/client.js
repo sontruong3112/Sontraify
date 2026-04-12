@@ -220,6 +220,14 @@ export const authApi = {
     });
   },
 
+  clerkLogin: (payload) => {
+    return apiRequest({
+      endpoint: "/auth/clerk",
+      method: "POST",
+      body: payload,
+    });
+  },
+
   refreshToken: () => {
     return apiRequest({
       endpoint: "/auth/refresh-token",
