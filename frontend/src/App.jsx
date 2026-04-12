@@ -23,6 +23,7 @@ import UserPage from './pages/UserPage'
 const TABLET_AUTO_COLLAPSE_BREAKPOINT = 1536
 const MOBILE_LAYOUT_BREAKPOINT = 1280
 const GUEST_LIKED_SONGS_KEY = 'guest_liked_song_ids'
+const GUEST_LIKED_COLLECTION_META_KEY = 'guest_liked_collection_meta'
 const GUEST_RECENT_TRACKS_KEY = 'guest_recent_track_ids'
 const GUEST_QUEUE_TRACKS_KEY = 'guest_queue_track_ids'
 const PREFERENCE_ACTION_QUEUE_KEY_PREFIX = 'preference_action_queue_'
@@ -154,6 +155,9 @@ function App() {
   })
   const [isSidebarResizing, setIsSidebarResizing] = useState(false)
   const [likedSongIds, setLikedSongIds] = useState([])
+  const [likedCollectionName, setLikedCollectionName] = useState('Liked Songs')
+  const [likedCollectionCoverUrl, setLikedCollectionCoverUrl] = useState('')
+  const [likedCollectionCoverUploadLoading, setLikedCollectionCoverUploadLoading] = useState(false)
   const [recentTrackIds, setRecentTrackIds] = useState([])
   const [queuedTrackIds, setQueuedTrackIds] = useState([])
   const [forcedPlaybackSongIds, setForcedPlaybackSongIds] = useState([])
@@ -385,6 +389,10 @@ function App() {
     return currentUser?.id ? `liked_song_ids_${currentUser.id}` : GUEST_LIKED_SONGS_KEY
   }, [currentUser?.id])
 
+  const likedCollectionMetaStorageKey = useMemo(() => {
+    return currentUser?.id ? `liked_collection_meta_${currentUser.id}` : GUEST_LIKED_COLLECTION_META_KEY
+  }, [currentUser?.id])
+
   const recentTracksStorageKey = useMemo(() => {
     return currentUser?.id ? `recent_track_ids_${currentUser.id}` : GUEST_RECENT_TRACKS_KEY
   }, [currentUser?.id])
@@ -465,6 +473,7 @@ function App() {
   const isArtistRoute = location.pathname.startsWith('/artist/')
   const isAlbumRoute = location.pathname.startsWith('/album/')
   const isPlaylistRoute = location.pathname.startsWith('/playlist/')
+  const isLikedSongsRoute = location.pathname === '/liked-songs'
   const isAccountRoute = location.pathname === '/account'
   const isMessagesRoute = location.pathname === '/messages'
   const isLoginRoute = location.pathname === '/login'
@@ -1342,6 +1351,31 @@ function App() {
   }, [queuedTracksStorageKey, currentUser, accessToken])
 
   useEffect(() => {
+    try {
+      const raw = localStorage.getItem(likedCollectionMetaStorageKey)
+      const parsed = raw ? JSON.parse(raw) : {}
+      const nextName = String(parsed?.name || '').trim()
+      const nextCoverUrl = String(parsed?.coverUrl || '').trim()
+
+      setLikedCollectionName(nextName || 'Liked Songs')
+      setLikedCollectionCoverUrl(nextCoverUrl)
+    } catch {
+      setLikedCollectionName('Liked Songs')
+      setLikedCollectionCoverUrl('')
+    }
+  }, [likedCollectionMetaStorageKey])
+
+  useEffect(() => {
+    localStorage.setItem(
+      likedCollectionMetaStorageKey,
+      JSON.stringify({
+        name: likedCollectionName,
+        coverUrl: likedCollectionCoverUrl,
+      }),
+    )
+  }, [likedCollectionMetaStorageKey, likedCollectionName, likedCollectionCoverUrl])
+
+  useEffect(() => {
     if (currentUser && accessToken) {
       return
     }
@@ -1772,6 +1806,123 @@ function App() {
     const songMap = new Map(songs.map((song) => [song._id, song]))
     return likedSongIds.map((id) => songMap.get(id)).filter(Boolean)
   }, [likedSongIds, songs])
+
+  const likedSongsPlaylist = useMemo(() => {
+    return {
+      _id: 'liked-songs',
+      name: likedCollectionName || 'Liked Songs',
+      coverUrl: likedCollectionCoverUrl || '',
+      songs: likedSongs,
+    }
+  }, [likedCollectionName, likedCollectionCoverUrl, likedSongs])
+
+  const handleOpenLikedSongsPage = () => {
+    navigate('/liked-songs')
+    setIsMobileSidebarOpen(false)
+  }
+
+  const handleRemoveSongFromLikedSongs = async (_likedCollectionId, songId) => {
+    if (!songId || !likedSongIds.includes(songId)) {
+      return
+    }
+
+    toggleLikeSong(songId)
+  }
+
+  const handleMoveSongInLikedSongs = async (_likedCollectionId, index, direction) => {
+    setLikedSongIds((prev) => {
+      const nextIndex = index + direction
+      if (index < 0 || nextIndex < 0 || index >= prev.length || nextIndex >= prev.length) {
+        return prev
+      }
+
+      const next = [...prev]
+      const temp = next[index]
+      next[index] = next[nextIndex]
+      next[nextIndex] = temp
+      return next
+    })
+  }
+
+  const handleDragReorderLikedSongs = async (_likedCollectionId, fromIndex, toIndex) => {
+    let didReorder = false
+
+    setLikedSongIds((prev) => {
+      if (fromIndex < 0 || toIndex < 0 || fromIndex >= prev.length || toIndex >= prev.length || fromIndex === toIndex) {
+        return prev
+      }
+
+      const next = [...prev]
+      const [moved] = next.splice(fromIndex, 1)
+      next.splice(toIndex, 0, moved)
+      didReorder = true
+      return next
+    })
+
+    return didReorder
+  }
+
+  const handleRenameLikedSongs = async (_likedCollectionId, nextNameRaw) => {
+    const nextName = String(nextNameRaw || '').trim()
+    if (!nextName) {
+      showPlayerToast('Please enter a playlist name')
+      return
+    }
+
+    setLikedCollectionName(nextName)
+  }
+
+  const handleUpdateLikedSongsCover = async (_likedCollectionId, coverUrlRaw) => {
+    setLikedCollectionCoverUrl(String(coverUrlRaw || '').trim())
+  }
+
+  const handleUploadLikedSongsCover = async (_likedCollectionId, file) => {
+    if (!file) {
+      return false
+    }
+
+    setLikedCollectionCoverUploadLoading(true)
+
+    try {
+      const nextCoverDataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader()
+
+        reader.onload = () => {
+          resolve(String(reader.result || ''))
+        }
+
+        reader.onerror = () => {
+          reject(new Error('Failed to read image file'))
+        }
+
+        reader.readAsDataURL(file)
+      })
+
+      if (!nextCoverDataUrl) {
+        return false
+      }
+
+      setLikedCollectionCoverUrl(nextCoverDataUrl)
+      return true
+    } catch {
+      showPlayerToast('Unable to upload cover image')
+      return false
+    } finally {
+      setLikedCollectionCoverUploadLoading(false)
+    }
+  }
+
+  const handleClearLikedSongsCollection = async () => {
+    const idsToClear = [...likedSongIds]
+
+    setLikedSongIds([])
+    setLikedCollectionName('Liked Songs')
+    setLikedCollectionCoverUrl('')
+
+    idsToClear.forEach((songId) => {
+      syncPreferenceAction({ action: 'like_remove', songId })
+    })
+  }
 
   const recentlyPlayedSongs = useMemo(() => {
     if (!recentTrackIds.length || !songs.length) {
@@ -2343,6 +2494,8 @@ function App() {
           artists={artists}
           playTrackById={playTrackById}
           onOpenMessages={handleOpenMessages}
+          onOpenLikedSongs={handleOpenLikedSongsPage}
+          isLikedSongsRoute={isLikedSongsRoute}
           onResizeStart={handleLeftSidebarResizeStart}
         />
       )}
@@ -2374,7 +2527,7 @@ function App() {
                         const nextValue = event.target.value
                         setSearchQuery(nextValue)
                         setIsSearchMenuOpen(Boolean(nextValue.trim()))
-                        if (activeArtist || isPlaylistRoute || isMessagesRoute || isAlbumRoute) {
+                        if (activeArtist || isPlaylistRoute || isMessagesRoute || isAlbumRoute || isLikedSongsRoute) {
                           navigate('/')
                           setActiveArtist('')
                           setForcedPlaybackSongIds([])
@@ -2709,6 +2862,30 @@ function App() {
 
                   navigate('/')
                 }}
+              />
+            ) : isLikedSongsRoute ? (
+              <PlaylistPage
+                playlist={likedSongsPlaylist}
+                playlistActionLoadingId=""
+                playTrackById={playTrackById}
+                currentTrackId={currentTrackId}
+                isPlaying={isPlaying}
+                onToggleSongPlayback={handleToggleSongPlayback}
+                handleRemoveSongFromPlaylist={handleRemoveSongFromLikedSongs}
+                handleMoveSongInPlaylist={handleMoveSongInLikedSongs}
+                handleDragReorderSongsInPlaylist={handleDragReorderLikedSongs}
+                handleDeletePlaylist={handleClearLikedSongsCollection}
+                handleRenamePlaylist={handleRenameLikedSongs}
+                handleUpdatePlaylistCover={handleUpdateLikedSongsCover}
+                handleUploadPlaylistCover={handleUploadLikedSongsCover}
+                addSongToQueueNext={addSongToQueueNext}
+                addSongToQueueLast={addSongToQueueLast}
+                isSongLiked={isSongLiked}
+                toggleLikeSong={toggleLikeSong}
+                playlistLoading={false}
+                playlistCoverUploadLoading={likedCollectionCoverUploadLoading}
+                onShowToast={showPlayerToast}
+                onBackToHome={handleGoHome}
               />
             ) : isPlaylistRoute ? (
               <PlaylistPage

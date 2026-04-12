@@ -232,17 +232,6 @@ function AccountPage({
         )}
       </form>
 
-      <div className="mt-6 rounded-xl border border-white/10 bg-zinc-900/60 p-4">
-        <p className="text-sm font-semibold text-white">Authentication Flow Status</p>
-        <p className="mt-2 text-sm text-zinc-300">
-          Bạn đã đăng nhập thành công. Session/token đang hoạt động và các tính năng cá nhân đã mở.
-        </p>
-        <ul className="mt-3 space-y-1 text-xs text-zinc-400">
-          <li>- Kiểm tra avatar top-right cập nhật sau khi Save profile</li>
-          <li>- Kiểm tra route /account bị chuyển qua /login nếu chưa đăng nhập</li>
-          <li>- Kiểm tra thao tác Like/Queue/Playlist yêu cầu đăng nhập</li>
-        </ul>
-      </div>
     </section>
   )
 }

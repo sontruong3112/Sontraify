@@ -17,6 +17,8 @@ function LeftSidebar({
   likedSongsCount = 0,
   likedSongs = [],
   onOpenMessages = () => {},
+  onOpenLikedSongs = () => {},
+  isLikedSongsRoute = false,
 }) {
   const effectiveCollapsed = false
 
@@ -173,7 +175,13 @@ function LeftSidebar({
 
               <section>
                 <div className="mb-2 flex items-center justify-between">
-                  <p className="type-kicker text-zinc-300">Liked Songs</p>
+                  <button
+                    type="button"
+                    onClick={onOpenLikedSongs}
+                    className={`type-kicker rounded px-1 text-left ${isLikedSongsRoute ? 'bg-green-500/20 text-green-300' : 'text-zinc-300 hover:text-zinc-100'}`}
+                  >
+                    Liked Songs
+                  </button>
                   <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-400">{likedSongsCount}</span>
                 </div>
 
