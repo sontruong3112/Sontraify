@@ -1,4 +1,4 @@
-﻿import React from 'react'
+﻿import React, { useEffect, useRef } from 'react'
 import { formatDuration } from '../utils/formatDuration'
 
 function AdminPage({
@@ -50,6 +50,14 @@ function AdminPage({
 }) {
   const selectedArtist = artistLibrary.find((artist) => artist.id === adminAlbumSongForm.artistId) || null
   const selectedAlbums = Array.isArray(selectedArtist?.albums) ? selectedArtist.albums : []
+  const nameInputRef = useRef(null)
+
+  useEffect(() => {
+    if (editingArtistId && nameInputRef.current) {
+      nameInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      nameInputRef.current.focus()
+    }
+  }, [editingArtistId])
 
   return (
     <div className="space-y-4">
@@ -276,17 +284,19 @@ function AdminPage({
         <div className="mt-3 overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="type-table-head text-zinc-500">
-              <tr>
-                <th className="pb-2">Artist</th>
-                <th className="pb-2">Albums</th>
-                <th className="pb-2 text-right">Action</th>
-              </tr>
+                <tr>
+                  <th className="pb-2">Artist</th>
+                  <th className="pb-2">Albums</th>
+                  <th className="pb-2">Created</th>
+                  <th className="pb-2 text-right">Action</th>
+                </tr>
             </thead>
             <tbody>
               {artistLibrary.map((artist) => (
                 <tr key={`artist-row-${artist.id}`} className="border-t border-white/6">
                   <td className="py-2">{artist.name}</td>
                   <td className="py-2 text-zinc-400">{Array.isArray(artist.albums) ? artist.albums.length : 0}</td>
+                  <td className="py-2 text-zinc-400">{artist.createdAt ? new Date(artist.createdAt).toLocaleString() : ''}</td>
                   <td className="py-2 text-right">
                     <button type="button" onClick={() => onEditArtist(artist)} className="type-button-sm mr-2 rounded bg-zinc-800 px-2 py-1">Edit</button>
                     <button type="button" onClick={() => onDeleteArtist(artist.id || artist._id)} disabled={artistMutationLoading} className="type-button-sm rounded bg-red-500/20 px-2 py-1 text-red-200">Delete</button>
@@ -304,7 +314,7 @@ function AdminPage({
         <div className="grid gap-3 lg:grid-cols-2">
           <form className="space-y-2 rounded-md bg-zinc-900/50 p-3" onSubmit={onCreateArtist}>
             <p className="text-sm font-semibold text-zinc-100">{editingArtistId ? 'Edit artist' : 'Create artist'}</p>
-            <input name="name" value={adminArtistForm.name} onChange={onAdminArtistInput} placeholder="Artist name" className="w-full rounded-md bg-zinc-900 px-3 py-2 text-sm" required />
+            <input ref={nameInputRef} name="name" value={adminArtistForm.name} onChange={onAdminArtistInput} placeholder="Artist name" className="w-full rounded-md bg-zinc-900 px-3 py-2 text-sm" required />
             <input name="avatarUrl" value={adminArtistForm.avatarUrl} onChange={onAdminArtistInput} placeholder="Avatar URL" className="w-full rounded-md bg-zinc-900 px-3 py-2 text-sm" />
             <input name="bannerUrl" value={adminArtistForm.bannerUrl} onChange={onAdminArtistInput} placeholder="Banner URL" className="w-full rounded-md bg-zinc-900 px-3 py-2 text-sm" />
             <textarea name="bio" value={adminArtistForm.bio} onChange={onAdminArtistInput} placeholder="Artist bio" className="min-h-20 w-full rounded-md bg-zinc-900 px-3 py-2 text-sm" />
