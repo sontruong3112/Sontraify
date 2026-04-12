@@ -267,6 +267,36 @@ function AdminPage({
       </section>
 
       <section className="rounded-lg bg-[#181818] p-3">
+        <h2 className="mb-3 text-lg font-semibold">Artists</h2>
+        {artistLibraryLoading ? <p className="mt-3 text-sm text-zinc-400">Loading artists...</p> : null}
+        {artistLibraryError ? <p className="mt-3 rounded-md bg-red-500/20 px-3 py-2 text-sm text-red-200">{artistLibraryError}</p> : null}
+
+        <div className="mt-3 overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="type-table-head text-zinc-500">
+              <tr>
+                <th className="pb-2">Artist</th>
+                <th className="pb-2">Albums</th>
+                <th className="pb-2 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {artistLibrary.map((artist) => (
+                <tr key={`artist-row-${artist.id}`} className="border-t border-white/6">
+                  <td className="py-2">{artist.name}</td>
+                  <td className="py-2 text-zinc-400">{Array.isArray(artist.albums) ? artist.albums.length : 0}</td>
+                  <td className="py-2 text-right">
+                    <button type="button" onClick={() => onEditArtist(artist)} className="type-button-sm mr-2 rounded bg-zinc-800 px-2 py-1">Edit</button>
+                    <button type="button" onClick={() => onDeleteArtist(artist.id || artist._id)} disabled={artistMutationLoading} className="type-button-sm rounded bg-red-500/20 px-2 py-1 text-red-200">Delete</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="rounded-lg bg-[#181818] p-3">
         <h2 className="mb-3 text-lg font-semibold">Artist and album manager</h2>
 
         <div className="grid gap-3 lg:grid-cols-2">
@@ -325,30 +355,11 @@ function AdminPage({
 
         {artistLibraryLoading ? <p className="mt-3 text-sm text-zinc-400">Loading artists...</p> : null}
         {artistLibraryError ? <p className="mt-3 rounded-md bg-red-500/20 px-3 py-2 text-sm text-red-200">{artistLibraryError}</p> : null}
+      </section>
 
-        <div className="mt-3 overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="type-table-head text-zinc-500">
-              <tr>
-                <th className="pb-2">Artist</th>
-                <th className="pb-2">Albums</th>
-                <th className="pb-2 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {artistLibrary.map((artist) => (
-                <tr key={`artist-row-${artist.id}`} className="border-t border-white/6">
-                  <td className="py-2">{artist.name}</td>
-                  <td className="py-2 text-zinc-400">{Array.isArray(artist.albums) ? artist.albums.length : 0}</td>
-                  <td className="py-2 text-right">
-                    <button type="button" onClick={() => onEditArtist(artist)} className="type-button-sm mr-2 rounded bg-zinc-800 px-2 py-1">Edit</button>
-                    <button type="button" onClick={() => onDeleteArtist(artist.id || artist._id)} disabled={artistMutationLoading} className="type-button-sm rounded bg-red-500/20 px-2 py-1 text-red-200">Delete</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      <section className="rounded-lg bg-[#181818] p-3">
+        <h2 className="mb-3 text-lg font-semibold">Admin song manager</h2>
+        {/* song create is above; keep this area for management below if needed */}
       </section>
     </div>
   )
