@@ -21,6 +21,7 @@ function ArtistPage({
   const allSongs = useMemo(() => albums.flatMap((album) => (Array.isArray(album.songs) ? album.songs : [])), [albums])
   const heroSong = allSongs[0] || null
   const [sortMode, setSortMode] = useState('latest')
+  const [showAllPopular, setShowAllPopular] = useState(false)
 
   const topTracks = useMemo(() => {
     const songMap = new Map()
@@ -42,6 +43,28 @@ function ArtistPage({
     }
 
     return list.slice(0, 10)
+  }, [allSongs, sortMode])
+
+  const topTracksFull = useMemo(() => {
+    const songMap = new Map()
+
+    allSongs.forEach((song) => {
+      if (song?._id && !songMap.has(song._id)) {
+        songMap.set(song._id, song)
+      }
+    })
+
+    const list = Array.from(songMap.values())
+
+    if (sortMode === 'title') {
+      list.sort((a, b) => String(a?.title || '').localeCompare(String(b?.title || '')))
+    } else if (sortMode === 'duration') {
+      list.sort((a, b) => Number(a?.duration || 0) - Number(b?.duration || 0))
+    } else {
+      list.sort((a, b) => new Date(b?.createdAt || 0).getTime() - new Date(a?.createdAt || 0).getTime())
+    }
+
+    return list
   }, [allSongs, sortMode])
 
   return (
@@ -106,7 +129,7 @@ function ArtistPage({
           </div>
 
           <div className="space-y-2">
-            {topTracks.map((song, index) => (
+            {(showAllPopular ? topTracksFull : topTracks).map((song, index) => (
               <div key={`artist-track-${song._id}`} className="group flex flex-wrap items-center gap-2 rounded-md bg-[#181818] px-3 py-2 hover:bg-[#232323] sm:flex-nowrap sm:gap-3">
                 <button
                   type="button"
@@ -182,6 +205,15 @@ function ArtistPage({
               </div>
             ))}
           </div>
+          {topTracksFull.length > topTracks.length && (
+            <div className="mt-3 flex justify-center">
+              {!showAllPopular ? (
+                <button type="button" onClick={() => setShowAllPopular(true)} className="type-button-sm rounded-md bg-zinc-800 px-4 py-2">See more</button>
+              ) : (
+                <button type="button" onClick={() => setShowAllPopular(false)} className="type-button-sm rounded-md bg-zinc-800 px-4 py-2">Show less</button>
+              )}
+            </div>
+          )}
         </section>
       )}
 
