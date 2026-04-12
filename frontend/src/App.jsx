@@ -2055,7 +2055,6 @@ function App() {
           }
         })
         .filter(Boolean)
-        .slice(0, 10)
     }
 
     if (!playbackQueue.length) {
@@ -2066,7 +2065,7 @@ function App() {
     const startIndex = currentIndex >= 0 ? currentIndex : 0
     const queue = []
 
-    for (let offset = 1; offset < playbackQueue.length && queue.length < 6; offset += 1) {
+    for (let offset = 1; offset < playbackQueue.length; offset += 1) {
       const nextIndex = (startIndex + offset) % playbackQueue.length
       queue.push({
         song: playbackQueue[nextIndex],
