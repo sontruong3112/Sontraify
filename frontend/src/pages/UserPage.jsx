@@ -25,7 +25,15 @@ function UserPage({
   artistLibrary = [],
   artistLibraryLoading = false,
   searchQuery = '',
+  activeHomeFilter = 'all',
 }) {
+  const showTrendingSection = activeHomeFilter === 'all' || activeHomeFilter === 'trending'
+  const showArtistsSection = activeHomeFilter === 'all' || activeHomeFilter === 'artist'
+  const showRecommendedSection = activeHomeFilter === 'all' || activeHomeFilter === 'recommended'
+  const hasVisibleData = (showTrendingSection && trendingSongs.length > 0)
+    || (showArtistsSection && artistLibrary.length > 0)
+    || (showRecommendedSection && recommendedSongs.length > 0)
+
   const renderSongPlayButton = (song) => {
     const active = song?._id === currentTrackId
     const showPause = active && isPlaying
@@ -56,6 +64,7 @@ function UserPage({
 
       {!loading && !error && (
         <>
+          {showTrendingSection ? (
           <section className="mb-8">
             <div className="mb-3 flex items-end justify-between">
               <h2 className="type-display-title">Trending</h2>
@@ -88,7 +97,9 @@ function UserPage({
               </div>
             )}
           </section>
+          ) : null}
 
+          {showArtistsSection ? (
           <section className="mb-8">
             <div className="mb-3 flex items-end justify-between">
               <h2 className="type-display-title">Artists</h2>
@@ -117,7 +128,9 @@ function UserPage({
               </div>
             )}
           </section>
+          ) : null}
 
+          {showRecommendedSection ? (
           <section className="mb-8">
             <div className="mb-3 flex items-end justify-between">
               <h2 className="type-display-title">Recommended Stations</h2>
@@ -191,10 +204,11 @@ function UserPage({
               ))}
             </div>
           </section>
+          ) : null}
 
-          {searchQuery.trim() && recommendedSongs.length === 0 && (
+          {searchQuery.trim() && !hasVisibleData && (
             <p className="mt-4 rounded-md bg-zinc-900 px-3 py-2 text-sm text-zinc-400">
-              No songs found for keyword "{searchQuery}"
+              No results found for keyword "{searchQuery}" in this tab.
             </p>
           )}
         </>

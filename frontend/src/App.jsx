@@ -131,9 +131,17 @@ const Icon = ({ children, className = 'h-4 w-4' }) => (
   </svg>
 )
 
+const HOME_FEED_FILTERS = [
+  { id: 'all', label: 'ALL' },
+  { id: 'artist', label: 'artist' },
+  { id: 'trending', label: 'trending' },
+  { id: 'recommended', label: 'Recommended Stations' },
+]
+
 function App() {
   const [currentTrackId, setCurrentTrackId] = useState(getInitialTrackId)
   const [searchQuery, setSearchQuery] = useState('')
+  const [activeHomeFeedFilter, setActiveHomeFeedFilter] = useState('all')
   const [isSearchMenuOpen, setIsSearchMenuOpen] = useState(false)
   const [activeArtist, setActiveArtist] = useState('')
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
@@ -476,6 +484,7 @@ function App() {
   const isAccountRoute = location.pathname === '/account'
   const isMessagesRoute = location.pathname === '/messages'
   const isLoginRoute = location.pathname === '/login'
+  const isHomeFeedRoute = !isAccountRoute && !isMessagesRoute && !isAdminRoute && !isArtistRoute && !isAlbumRoute && !isPlaylistRoute && !isLikedSongsRoute && !isLoginRoute
 
   useEffect(() => {
     if (!isLoginRoute) {
@@ -1177,6 +1186,102 @@ function App() {
   const searchSuggestions = useMemo(() => filteredSongs.slice(0, 8), [filteredSongs])
 
   const recommendedSongs = useMemo(() => filteredSongs.slice(0, 10), [filteredSongs])
+
+  const filteredTrendingSongs = useMemo(() => {
+    const keyword = toSearchText(searchQuery)
+
+    if (!keyword) {
+      return trendingSongs
+    }
+
+    return trendingSongs
+      .map((song) => ({
+        song,
+        score: getSongSearchScore(song, keyword),
+      }))
+      .filter((entry) => entry.score > 0)
+      .sort((a, b) => {
+        if (b.score !== a.score) {
+          return b.score - a.score
+        }
+
+        return String(a.song?.title || '').localeCompare(String(b.song?.title || ''))
+      })
+      .map((entry) => entry.song)
+  }, [trendingSongs, searchQuery])
+
+  const filteredArtistLibrary = useMemo(() => {
+    const keyword = toSearchText(searchQuery)
+
+    if (!keyword) {
+      return artistLibrary
+    }
+
+    return artistLibrary
+      .map((artist) => {
+        const name = toSearchText(artist?.name || '')
+        const albumsText = Array.isArray(artist?.albums)
+          ? artist.albums
+            .map((album) => toSearchText(album?.title || ''))
+            .join(' ')
+          : ''
+
+        const joined = `${name} ${albumsText}`.trim()
+        if (!joined) {
+          return { artist, score: 0 }
+        }
+
+        let score = 0
+        if (name.startsWith(keyword)) score += 160
+        if (name.includes(keyword)) score += 120
+        if (albumsText.includes(keyword)) score += 60
+
+        const compactKeyword = keyword.replace(/\s+/g, '')
+        const compactJoined = joined.replace(/\s+/g, '')
+        if (compactKeyword && isSubsequenceMatch(compactKeyword, compactJoined)) {
+          score += 30
+        }
+
+        return { artist, score }
+      })
+      .filter((entry) => entry.score > 0)
+      .sort((a, b) => {
+        if (b.score !== a.score) {
+          return b.score - a.score
+        }
+
+        return String(a.artist?.name || '').localeCompare(String(b.artist?.name || ''))
+      })
+      .map((entry) => entry.artist)
+  }, [artistLibrary, searchQuery])
+
+  const homeFeedFilterOptions = useMemo(() => {
+    const countsById = {
+      all: Math.max(filteredTrendingSongs.length, filteredArtistLibrary.length, recommendedSongs.length),
+      artist: filteredArtistLibrary.length,
+      trending: filteredTrendingSongs.length,
+      recommended: recommendedSongs.length,
+    }
+
+    return HOME_FEED_FILTERS.map((item) => ({
+      ...item,
+      count: countsById[item.id] || 0,
+    }))
+  }, [filteredTrendingSongs.length, filteredArtistLibrary.length, recommendedSongs.length])
+
+  useEffect(() => {
+    if (!isHomeFeedRoute) {
+      return
+    }
+
+    const current = homeFeedFilterOptions.find((item) => item.id === activeHomeFeedFilter)
+    if (current && current.count > 0) {
+      return
+    }
+
+    const fallback = homeFeedFilterOptions.find((item) => item.count > 0)
+    setActiveHomeFeedFilter(fallback?.id || 'all')
+  }, [isHomeFeedRoute, homeFeedFilterOptions, activeHomeFeedFilter])
 
   useEffect(() => {
     if (!routeArtistIdOrSlug) {
@@ -2777,12 +2882,27 @@ function App() {
               </div>
             </div>
 
-            <div className="mb-4 flex flex-wrap items-center gap-2">
-              <img src="/logo-white.svg" alt="Sontraify in-page logo" className="h-6 w-6 rounded-sm" />
-              <button type="button" className="type-button-sm rounded-full bg-white px-3 py-1 text-black">All</button>
-              <button type="button" className="type-button-sm rounded-full bg-zinc-800 px-3 py-1">Music</button>
-              <button type="button" className="type-button-sm rounded-full bg-zinc-800 px-3 py-1">Podcasts</button>
-            </div>
+            {isHomeFeedRoute ? (
+              <div className="mb-4 flex flex-wrap items-center gap-2">
+                <img src="/logo-white.svg" alt="Sontraify in-page logo" className="h-6 w-6 rounded-sm" />
+                {homeFeedFilterOptions.map((item) => {
+                  const isActive = activeHomeFeedFilter === item.id
+                  const isDisabled = item.count === 0
+
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setActiveHomeFeedFilter(item.id)}
+                      disabled={isDisabled}
+                      className={`type-button-sm rounded-full px-3 py-1 transition ${isActive ? 'bg-white text-black' : 'bg-zinc-800 text-zinc-200'} ${isDisabled ? 'cursor-not-allowed opacity-45' : 'hover:bg-zinc-700'}`}
+                    >
+                      {item.label}
+                    </button>
+                  )
+                })}
+              </div>
+            ) : null}
 
             {isAccountRoute ? (
               <AccountPage
@@ -2950,16 +3070,17 @@ function App() {
                 setSelectedPlaylistBySong={setSelectedPlaylistBySong}
                 playlistActionLoadingId={playlistActionLoadingId}
                 handleAddSongToPlaylist={handleAddSongToPlaylistWithAuth}
-                trendingSongs={trendingSongs}
+                trendingSongs={filteredTrendingSongs}
                 trendingSongsLoading={trendingSongsLoading}
                 isSongLiked={isSongLiked}
                 toggleLikeSong={toggleLikeSong}
                 addSongToQueueNext={addSongToQueueNext}
                 addSongToQueueLast={addSongToQueueLast}
                 onOpenArtistPage={handleOpenArtistPage}
-                artistLibrary={artistLibrary}
+                artistLibrary={filteredArtistLibrary}
                 artistLibraryLoading={artistLibraryLoading}
                 searchQuery={searchQuery}
+                activeHomeFilter={activeHomeFeedFilter}
               />
             )}
           </div>
