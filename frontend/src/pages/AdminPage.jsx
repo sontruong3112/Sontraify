@@ -52,17 +52,22 @@ function AdminPage({
       <section className="rounded-lg bg-[#181818] p-3">
         <h2 className="mb-3 text-lg font-semibold">Admin song manager</h2>
         <form className="grid gap-2 sm:grid-cols-2" onSubmit={handleCreateOrUpdateSong}>
-          <input name="title" value={adminSongForm.title} onChange={handleAdminSongInput} placeholder="Song title" className="rounded-md bg-zinc-900 px-3 py-2 text-sm" required />
-          <input name="artist" value={adminSongForm.artist} onChange={handleAdminSongInput} placeholder="Artist name" className="rounded-md bg-zinc-900 px-3 py-2 text-sm" required />
-          <input name="genre" value={adminSongForm.genre} onChange={handleAdminSongInput} placeholder="Genre" className="rounded-md bg-zinc-900 px-3 py-2 text-sm" required />
-          <input name="audioUrl" value={adminSongForm.audioUrl} onChange={handleAdminSongInput} placeholder="Audio URL" className="rounded-md bg-zinc-900 px-3 py-2 text-sm" required />
-          <input name="coverUrl" value={adminSongForm.coverUrl} onChange={handleAdminSongInput} placeholder="Cover URL" className="rounded-md bg-zinc-900 px-3 py-2 text-sm" />
+          <input name="title" value={adminSongForm.title} onChange={handleAdminSongInput} placeholder="Song title" className="rounded-md bg-zinc-900 px-3 py-3 text-base font-medium" required />
+          <select name="artist" value={adminSongForm.artist} onChange={handleAdminSongInput} className="rounded-md bg-zinc-900 px-3 py-3 text-base font-medium" required>
+            <option value="">Select artist</option>
+            {artistLibrary.map((artist) => (
+              <option key={`song-artist-${artist.id}`} value={artist.name}>{artist.name}</option>
+            ))}
+          </select>
+          <input name="genre" value={adminSongForm.genre} onChange={handleAdminSongInput} placeholder="Genre" className="rounded-md bg-zinc-900 px-3 py-3 text-base font-medium" required />
+          <input name="audioUrl" value={adminSongForm.audioUrl} onChange={handleAdminSongInput} placeholder="Audio URL" className="rounded-md bg-zinc-900 px-3 py-3 text-base font-medium" required />
+          <input name="coverUrl" value={adminSongForm.coverUrl} onChange={handleAdminSongInput} placeholder="Cover URL" className="rounded-md bg-zinc-900 px-3 py-3 text-base font-medium" />
           <div className="rounded-md bg-zinc-900 px-3 py-2 text-sm text-zinc-300">
             <button
               type="button"
               onClick={() => audioFileInputRef.current?.click()}
               disabled={audioUploadLoading || songMutationLoading}
-              className="type-button-sm w-full rounded-md bg-zinc-800 px-3 py-2 hover:bg-zinc-700 disabled:opacity-70"
+              className="type-button-lg w-full rounded-md bg-zinc-800 px-3 py-2 hover:bg-zinc-700 disabled:opacity-70 font-medium"
             >
               {audioUploadLoading ? 'Uploading audio...' : 'Upload audio file'}
             </button>
@@ -80,7 +85,7 @@ function AdminPage({
               type="button"
               onClick={() => coverFileInputRef.current?.click()}
               disabled={coverUploadLoading || songMutationLoading}
-              className="type-button-sm w-full rounded-md bg-zinc-800 px-3 py-2 hover:bg-zinc-700 disabled:opacity-70"
+              className="type-button-lg w-full rounded-md bg-zinc-800 px-3 py-2 hover:bg-zinc-700 disabled:opacity-70 font-medium"
             >
               {coverUploadLoading ? 'Uploading cover...' : 'Upload cover image'}
             </button>
@@ -94,11 +99,11 @@ function AdminPage({
             />
           </div>
           <div className="sm:col-span-2 flex gap-2">
-            <button type="submit" disabled={songMutationLoading} className="type-button-sm rounded-md bg-white px-4 py-2 text-black">
+            <button type="submit" disabled={songMutationLoading} className="type-button-lg rounded-md bg-white px-4 py-3 text-black font-semibold">
               {songMutationLoading ? 'Saving...' : editingSongId ? 'Update song' : 'Create song'}
             </button>
             {editingSongId && (
-              <button type="button" onClick={resetAdminSongForm} className="type-button-sm rounded-md bg-zinc-800 px-4 py-2">Cancel</button>
+              <button type="button" onClick={resetAdminSongForm} className="type-button-lg rounded-md bg-zinc-800 px-4 py-3">Cancel</button>
             )}
           </div>
         </form>
