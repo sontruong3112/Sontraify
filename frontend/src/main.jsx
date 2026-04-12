@@ -6,7 +6,7 @@ import './index.css'
 import App from './App.jsx'
 
 const clerkPublishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || ''
-const hasValidClerkPublishableKey = String(clerkPublishableKey).startsWith('pk_')
+const hasValidClerkPublishableKey = /^(pk_test_|pk_live_)[A-Za-z0-9_\-]+$/.test(String(clerkPublishableKey).trim())
 
 const appTree = (
   <HashRouter>

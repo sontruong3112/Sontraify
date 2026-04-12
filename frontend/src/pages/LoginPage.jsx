@@ -59,7 +59,7 @@ function LoginPage({
   onBackToPrevious,
 }) {
   const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || ''
-  const hasValidClerkKey = String(CLERK_PUBLISHABLE_KEY).startsWith('pk_')
+  const hasValidClerkKey = /^(pk_test_|pk_live_)[A-Za-z0-9_\-]+$/.test(String(CLERK_PUBLISHABLE_KEY).trim())
 
   return (
     <section className="mx-auto w-full max-w-105 px-2 py-8">

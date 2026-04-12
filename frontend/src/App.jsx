@@ -133,6 +133,9 @@ const Icon = ({ children, className = 'h-4 w-4' }) => (
 )
 
 function App() {
+  const hasValidClerkKey = /^(pk_test_|pk_live_)[A-Za-z0-9_\-]+$/.test(
+    String(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || '').trim(),
+  )
   const [currentTrackId, setCurrentTrackId] = useState(getInitialTrackId)
   const [searchQuery, setSearchQuery] = useState('')
   const [isSearchMenuOpen, setIsSearchMenuOpen] = useState(false)
@@ -2446,6 +2449,25 @@ function App() {
   }
 
   if (isClerkSsoCallbackRoute) {
+    if (!hasValidClerkKey) {
+      return (
+        <main className="min-h-screen bg-linear-to-b from-black via-[#121212] to-black px-4 py-6 sm:px-6 lg:px-8">
+          <section className="mx-auto w-full max-w-105 px-2 py-8">
+            <div className="rounded-2xl border border-white/10 bg-black/55 p-6 text-center shadow-2xl shadow-black/60 backdrop-blur-sm">
+              <p className="text-sm text-amber-200">Clerk chưa được cấu hình đúng. Vui lòng kiểm tra VITE_CLERK_PUBLISHABLE_KEY.</p>
+              <button
+                type="button"
+                onClick={() => navigate('/login', { replace: true })}
+                className="mt-4 rounded-full border border-white/15 px-4 py-2 text-sm text-zinc-200 hover:bg-white/10"
+              >
+                Quay lại đăng nhập
+              </button>
+            </div>
+          </section>
+        </main>
+      )
+    }
+
     return (
       <main className="min-h-screen bg-linear-to-b from-black via-[#121212] to-black px-4 py-6 sm:px-6 lg:px-8">
         <ClerkCallbackPage
