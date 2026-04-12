@@ -2444,6 +2444,21 @@ function App() {
     )
   }
 
+  if (isClerkSsoCallbackRoute) {
+    return (
+      <main className="min-h-screen bg-linear-to-b from-black via-[#121212] to-black px-4 py-6 sm:px-6 lg:px-8">
+        <div className="mx-auto flex min-h-[50vh] w-full max-w-105 items-center justify-center rounded-2xl border border-white/10 bg-black/55 p-6 shadow-2xl shadow-black/60 backdrop-blur-sm">
+          <AuthenticateWithRedirectCallback
+            afterSignInUrl="/#/login"
+            afterSignUpUrl="/#/login"
+            signInFallbackRedirectUrl="/#/login"
+            signUpFallbackRedirectUrl="/#/login"
+          />
+        </div>
+      </main>
+    )
+  }
+
   if (isLoginRoute) {
     return (
       <main className="min-h-screen bg-linear-to-b from-black via-[#121212] to-black px-4 py-6 sm:px-6 lg:px-8">

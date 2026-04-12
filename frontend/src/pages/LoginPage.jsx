@@ -23,8 +23,8 @@ function ClerkGoogleAuthButton({
 
       await signIn.authenticateWithRedirect({
         strategy: 'oauth_google',
-        redirectUrl: window.location.href,
-        redirectUrlComplete: window.location.href,
+        redirectUrl: `${window.location.origin}/#/sso-callback`,
+        redirectUrlComplete: `${window.location.origin}/#/login`,
       })
     } catch (error) {
       setAuthError(error?.errors?.[0]?.message || error?.message || 'Đăng nhập Google qua Clerk thất bại')
